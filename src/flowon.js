@@ -16,6 +16,7 @@ Function.prototype.bind = function (context) {
 
 
 var FlowOn_Router = function () {
+	this._ns = '';
 	this._routes = [];
 };
 FlowOn_Router.prototype.namespace = function (ns) {
