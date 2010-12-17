@@ -166,8 +166,16 @@ FlowOn._handleRequest = function (request, response) {
 
 			FileSystem.readFile(path, 'binary', function(error, file) {
 				if(error) {
-					response.writeHead(500);
-					response.write(err);
+					switch (error.errno) {
+					case 21: // EISDIR
+						response.writeHead(403);
+						response.write('Directory listing is not allowed.');
+						break;
+					default:
+						response.writeHead(500);
+						response.write(error.toString());
+						break;
+					}
 					response.end();
 					return;
 				}
