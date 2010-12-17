@@ -189,8 +189,16 @@ FlowOn._handleRequest = function (request, response) {
 		return;
 	}
 
-	if (this._controllers[route.controller] === undefined) {
-		var module = require(this._cfg.app_dir + 'controllers/' + route.controller + '.js');
+	var path = this._cfg.app_dir + 'controllers/' + route.controller + '.js';
+	Path.exists(path, function (exists) {
+		if(!exists) {
+			response.writeHead(503);
+			response.write('Missing controller file: ' + route.controller);
+			response.end();
+			return;
+		}
+
+		var module = require(path);
 		if(module.Controller === undefined) {
 			response.writeHead(503);
 			response.write('The file for the controller ' + route.controller + ' does not match the required output.');
@@ -198,20 +206,18 @@ FlowOn._handleRequest = function (request, response) {
 			return;
 		}
 
-		this._controllers[route.controller] = module.Controller;
-	}
+		var controller = new module.Controller();
+		if (controller[route.view] === undefined) {
+			response.writeHead(404);
+			response.end();
+			return;
+		}
 
-	var controller = new this._controllers[route.controller]();
-	if (controller[route.view] === undefined) {
-		response.writeHead(404);
-		response.end();
-		return;
-	}
-
-	controller.request = request;
-	controller._method = 'GET';
-	controller.response = response;
-	controller[route.view](route.params);
+		controller.request = request;
+		controller._method = 'GET';
+		controller.response = response;
+		controller[route.view](route.params);
+	}.bind(this));
 };
 
 FlowOn.createController = function(key, parent_key) {
