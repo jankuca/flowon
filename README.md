@@ -52,6 +52,8 @@ FlowOn is a very simple but powerful MVC framework for building RIAs.
 
 ## Controllers
 
+It is recommended to inherit from the supplied Controller class.
+
 Controller files are stored in the `app_dir/controllers/` directory. Router namespaces are also applied to this directory.
 
 	// app_dir/controllers/api/user.js:
@@ -88,6 +90,8 @@ Controller files are stored in the `app_dir/controllers/` directory. Router name
 ## Models
 
 It is recommended to inherit from the supplied Model class.
+
+Model files are stored in the `app_dir/models/` directory. Router namespaces are no applied to this directory.
 
 > Note that all field keys are namespaced as `NAMESPACE:KEY`. You can skip the namespace but have to leave the colon (`:KEY`).
 
