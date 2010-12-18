@@ -73,6 +73,8 @@ Controller files are stored in the `app_dir/controllers/` directory. Router name
 
 		'friends': function(params) {
 			new User({ 'id': params.id }, function (user) {
+				this.template.user = user;
+
 				user.getFriends(['users:realname'], function (friends) {
 					friends.toArray(function (error, friends) {
 						this.template.friends = friends.toArray();
@@ -130,11 +132,22 @@ FlowOn uses [EmbeddedJS](http://embeddedjs.com/) as its template engine.
 
 Template files are stored in the `app_dir/templates/` directory. Router namespaces are also applied to this directory. Then, the full path is `app_dir/templates/[namespace/]controller/view.format.ejs`
 
-> In the terms of providing the correct mime-type, only the `html` format is currently supported. Any other format will be send as text/plain.
+> In the terms of providing the correct mime-type, only the `html` format is currently supported. Any other format will be sent as text/plain.
 
 	// app_dir/templates/user/show.html.ejs:
 
 	<h1>Profile of <%= user['users:realname'] %></h1>
+
+
+	// app_dir/templates/user/friends.html.ejs
+
+	<h1>Friends of <%= user['users:realanme'] %></h1>
+
+	<ul>
+	<% for (var i = 0, ii = friends.length; i < ii; ++i) { %>
+		<li><%= friends[i]['users:realname'] %></li>
+	<% } %>
+	</ul>
 
 ### Layouts
 
@@ -145,14 +158,14 @@ Layout template files are stored in the same directory as regular view files, bu
 In the layout, there is the content of the current view accessible as `$content`.
 
 	// app_dir/templates/@layout.html.ejs:
-	
+
 	<!DOCTYPE html>
 	<html>
 	...
 	<body>
 	<h1>FlowOn readme example</h1>
-	
+
 	<%= $content %>
-	
+
 	</body>
 	</html>
