@@ -19,6 +19,7 @@ Router.prototype.namespace = function (ns) {
 }
 Router.prototype.push = function (pattern, options) {
 	this._routes.push([
+		this._ns == '' ? null : this._ns.substr(1),
 		this._ns + pattern,
 		options
 	]);
@@ -31,8 +32,8 @@ Router.prototype.match = function (uri) {
 
 	__route_loop: for (var r = 0, rr = routes.length; r < rr; ++r) {
 		route = routes[r];
-		pattern = route[0].replace(/\//g, '\\/');
-		options = route[1],
+		pattern = route[1].replace(/\//g, '\\/');
+		options = route[2],
 		regexps = options.params || {};
 
 		var param_keys = [];
@@ -75,6 +76,7 @@ Router.prototype.match = function (uri) {
 		}
 
 		return {
+			'namespace': route[0],
 			'controller': options.controller,
 			'view': options.view,
 			'params': params
@@ -84,13 +86,14 @@ Router.prototype.match = function (uri) {
 	return null;
 };
 
+
 var FlowOn = {
 	'_cfg': {
 		'port': 8124,
 		'db_type': null
 	},
 	'_controllers': {},
-	'__dirname': __dirname,
+	'__dirname': __dirname + '/',
 	'_router': new Router(),
 
 	'ROUTER_PARAM_INTEGER': /^\d+$/
@@ -181,7 +184,7 @@ FlowOn._handleRequest = function (request, response) {
 		return;
 	}
 
-	var path = this._cfg.app_dir + 'controllers/' + route.controller + '.js';
+	var path = Path.join(this._cfg.app_dir, 'controllers', route.namespace, route.controller + '.js');
 	Path.exists(path, function (exists) {
 		if(!exists) {
 			response.writeHead(503);
