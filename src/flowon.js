@@ -1,38 +1,29 @@
 var Http = require('http'),
 	Url = require('url'),
 	Path = require('path'),
-	FileSystem = require('fs');
+	FileSystem = require('fs'),
+	Class = require('./modules/class.js').Class,
+	Model = require('./modules/model.js').Model;
 
 
-Function.prototype.bind = function (context) {
-	if (arguments[0] === undefined) {
-		return this;
-	}
-	var fn = this;
-	return function () {
-		return fn.apply(context, arguments);
-	}
-};
-
-
-var FlowOn_Router = function () {
+var Router = function () {
 	this._ns = '';
 	this._routes = [];
 };
-FlowOn_Router.prototype.namespace = function (ns) {
+Router.prototype.namespace = function (ns) {
 	if (ns === null) {
 		this._ns = '';
 	} else {
 		this._ns = '/' + ns;
 	}
 }
-FlowOn_Router.prototype.push = function (pattern, options) {
+Router.prototype.push = function (pattern, options) {
 	this._routes.push([
 		this._ns + pattern,
 		options
 	]);
 };
-FlowOn_Router.prototype.match = function (uri) {
+Router.prototype.match = function (uri) {
 	var routes = this._routes,
 		route,
 		pattern,
@@ -99,7 +90,8 @@ var FlowOn = {
 		'db_type': null
 	},
 	'_controllers': {},
-	'_router': new FlowOn_Router(),
+	'__dirname': __dirname,
+	'_router': new Router(),
 
 	'ROUTER_PARAM_INTEGER': /^\d+$/
 };
@@ -156,7 +148,7 @@ FlowOn._handleRequest = function (request, response) {
 	if (route === null) {
 		console.log('No route for ' + uri + '. Trying to access a static file.');
 
-		var path = Path.join(process.cwd(), 'public', uri);
+		var path = Path.join(this._cfg.public_dir, uri);
 		Path.exists(path, function(exists) {
 			if(!exists) {
 				response.writeHead(404);
