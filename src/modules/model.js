@@ -22,15 +22,21 @@ var Model = exports.Model = Class.create({
 
 			app.db.collection(this.collection, function(error, collection) {
 				collection.findOne(filter, function(error, doc) {
-					this.doc = doc;
+					if (doc === undefined) {
+						this.doc = {};
+					} else {
+						this.doc = doc;
 
-					for (var i in doc) {
-						if (doc.hasOwnProperty(i)) {
-							this[i] = doc[i];
+						for (var i in doc) {
+							if (doc.hasOwnProperty(i)) {
+								this[i] = doc[i];
+							}
 						}
 					}
 
-					callback(this);
+					if (typeof callback == 'function') {
+						callback(this);
+					}
 				}.bind(this));
 			}.bind(this));
 		} else {
