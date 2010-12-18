@@ -4,6 +4,8 @@ var Http = require('http'),
 	FileSystem = require('fs'),
 	Class = require('./modules/class.js').Class;
 
+var Session;
+
 var Router = function () {
 	this._ns = '';
 	this._routes = [];
@@ -14,10 +16,10 @@ Router.prototype.namespace = function (ns) {
 	} else {
 		this._ns = '/' + ns;
 	}
-}
+};
 Router.prototype.push = function (pattern, options) {
 	this._routes.push([
-		this._ns == '' ? null : this._ns.substr(1),
+		this._ns === '' ? null : this._ns.substr(1),
 		this._ns + pattern,
 		options
 	]);
@@ -26,20 +28,22 @@ Router.prototype.match = function (uri) {
 	var routes = this._routes,
 		route,
 		pattern,
-		options;
+		options,
+		regexps;
 
 	__route_loop: for (var r = 0, rr = routes.length; r < rr; ++r) {
 		route = routes[r];
 		pattern = route[1].replace(/\//g, '\\/');
-		options = route[2],
+		options = route[2];
 		regexps = options.params || {};
 
 		var param_keys = [];
+		var p, pp;
 
-		var placeholders = pattern.match(/:[a-z][\w-]*/g);
+		var placeholders = pattern.match(/:[a-z][\w\-]*/g);
 		if (placeholders !== null) {
-			for (var p = 0, pp = placeholders.length; p < pp; ++p) {
-				var placeholder = placeholders[p].match(/^:([a-z][\w-]*)$/);
+			for (p = 0, pp = placeholders.length; p < pp; ++p) {
+				var placeholder = placeholders[p].match(/^:([a-z][\w\-]*)$/);
 				param_keys.push(placeholder[1]);
 				pattern = pattern.replace(':' + placeholder[1], '([^/]+)');
 			}
@@ -53,7 +57,7 @@ Router.prototype.match = function (uri) {
 		var rules = options.params,
 			params = {};
 		if (rules instanceof RegExp) {
-			for (var p = 0, pp = param_keys.length; p < pp; ++p) {
+			for (p = 0, pp = param_keys.length; p < pp; ++p) {
 				if (!rules.test(match[p + 1])) {
 					continue __route_loop;
 				}
@@ -61,7 +65,7 @@ Router.prototype.match = function (uri) {
 				params[param_keys[p]] = match[p + 1];
 			}
 		} else {
-			for (var p in rules) {
+			for (p in rules) {
 				if (rules.hasOwnProperty(p)) {
 					var index = param_keys.indexOf(p);
 					if (index == -1 || !rules[p].test(match[index + 1])) {
@@ -113,7 +117,7 @@ FlowOn.run = function () {
 	}
 
 	console.log('Using the "' + this._cfg.db_type + '" database driver.');
-	switch(this._cfg.db_type) {
+	switch (this._cfg.db_type) {
 	case 'mongodb':
 		this.db = new this.db_driver.Db(
 			this._cfg.db_name,
@@ -123,8 +127,8 @@ FlowOn.run = function () {
 				{}
 			)
 		);
-		this.db.open(function(error) {
-			if(error) {
+		this.db.open(function (error) {
+			if (error) {
 				console.log('Connection to the database failed: ' + error);
 				return;
 			}
@@ -134,7 +138,7 @@ FlowOn.run = function () {
 	}
 };
 
-FlowOn._startServer = function() {
+FlowOn._startServer = function () {
 	this._server = Http.createServer(this._handleRequest.bind(this));
 	this._server.listen(this._cfg.port);
 	
@@ -145,20 +149,21 @@ FlowOn._handleRequest = function (request, response) {
 	var uri = Url.parse(request.url).pathname;
 	console.log('Requesting ' + uri);
 
+	var path;
 	var route = this._router.match(uri);
 	if (route === null) {
 		console.log('No route for ' + uri + '. Trying to access a static file.');
 
-		var path = Path.join(this._cfg.public_dir, uri);
-		Path.exists(path, function(exists) {
-			if(!exists) {
+		path = Path.join(this._cfg.public_dir, uri);
+		Path.exists(path, function (exists) {
+			if (!exists) {
 				response.writeHead(404);
 				response.end();
 				return;
 			}
 
-			FileSystem.readFile(path, 'binary', function(error, file) {
-				if(error) {
+			FileSystem.readFile(path, 'binary', function (error, file) {
+				if (error) {
 					switch (error.errno) {
 					case 21: // EISDIR
 						response.writeHead(403);
@@ -182,9 +187,9 @@ FlowOn._handleRequest = function (request, response) {
 		return;
 	}
 
-	var path = Path.join(this._cfg.app_dir, 'controllers', route.namespace, route.controller + '.js');
+	path = Path.join(this._cfg.app_dir, 'controllers', route.namespace, route.controller + '.js');
 	Path.exists(path, function (exists) {
-		if(!exists) {
+		if (!exists) {
 			response.writeHead(503);
 			response.write('Missing controller file: ' + route.controller);
 			response.end();
@@ -192,7 +197,7 @@ FlowOn._handleRequest = function (request, response) {
 		}
 
 		var module = require(path);
-		if(module.Controller === undefined) {
+		if (module.Controller === undefined) {
 			response.writeHead(503);
 			response.write('The file for the controller ' + route.controller + ' does not match the required output.');
 			response.end();
@@ -207,8 +212,7 @@ FlowOn._handleRequest = function (request, response) {
 		}
 
 		// start session
-		var session,
-			cookie_header = request.headers.cookie,
+		var cookie_header = request.headers.cookie,
 			cookies = {},
 			cookie;
 		if (cookie_header !== undefined) {
@@ -230,10 +234,10 @@ FlowOn._handleRequest = function (request, response) {
 			controller[route.view](route.params);
 		}.bind(this);
 
-		new Session(cookies['FLOWONSESSID'], function (session) {
+		new Session(cookies.FLOWONSESSID, function (session) {
 			controller._session = session;
 
-			if(!session.exists()) {
+			if (!session.exists()) {
 				session['date:created'] = Math.floor(date.getTime() / 1000);
 				session.save(_callView.bind(this, session));
 			} else {
@@ -246,4 +250,4 @@ FlowOn._handleRequest = function (request, response) {
 exports.FlowOn = FlowOn;
 global.app = FlowOn;
 
-var Session = require('./modules/models/session.js').Model;
+Session = require('./modules/models/session.js').Model;
