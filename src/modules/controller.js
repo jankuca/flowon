@@ -69,7 +69,7 @@ exports.Controller = Class.create({
 
 			if (this._headers['content-type'] === undefined) {
 				var e = this.template._path.split('.');
-				switch (e[e.length-2] || 'txt') {
+				switch (e[e.length - 2] || 'txt') {
 				case 'html':
 					this._headers['content-type'] = 'text/html; charset=UTF-8';
 					break;

@@ -237,7 +237,7 @@ FlowOn._handleRequest = function (request, response) {
 			controller[route.view](route.params);
 		}.bind(this);
 
-		new Session(cookies.FLOWONSESSID, function (session) {
+		var session = new Session(cookies.FLOWONSESSID, function (session) {
 			controller._session = session;
 
 			if (!session.exists()) {

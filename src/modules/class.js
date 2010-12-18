@@ -1,17 +1,21 @@
 Object.prototype.extend = function (destination, source) {
 	for (var property in source) {
-		destination[property] = source[property];
+		if (source.hasOwnProperty(property)) {
+			destination[property] = source[property];
+		}
 	}
 	return destination;
 };
 
 
-Object.extend(Function.prototype, (function() {
+Object.extend(Function.prototype, (function () {
 	var slice = Array.prototype.slice;
 
 	function update(array, args) {
 		var arrayLength = array.length, length = args.length;
-		while (length--) array[arrayLength + length] = args[length];
+		while (length--) {
+			array[arrayLength + length] = args[length];
+		}
 		return array;
 	}
 
@@ -24,39 +28,43 @@ Object.extend(Function.prototype, (function() {
 		var names = this.toString().match(/^[\s\(]*function[^(]*\(([^)]*)\)/)[1]
 			.replace(/\/\/.*?[\r\n]|\/\*(?:.|[\r\n])*?\*\//g, '')
 			.replace(/\s+/g, '').split(',');
-		return names.length == 1 && !names[0] ? [] : names;
+		return (names.length == 1 && !names[0]) ? [] : names;
 	}
 
 	function bind(context) {
-		if (arguments.length < 2 && typeof arguments[0] == 'undefined') return this;
+		if (arguments.length < 2 && typeof arguments[0] == 'undefined') {
+			return this;
+		}
 		var __method = this, args = slice.call(arguments, 1);
-		return function() {
+		return function () {
 			var a = merge(args, arguments);
 			return __method.apply(context, a);
-		}
+		};
 	}
 
 	function bindAsEventListener(context) {
 		var __method = this, args = slice.call(arguments, 1);
-		return function(event) {
+		return function (event) {
 			var a = update([event || window.event], args);
 			return __method.apply(context, a);
-		}
+		};
 	}
 
 	function curry() {
-		if (!arguments.length) return this;
+		if (!arguments.length) {
+			return this;
+		}
 		var __method = this, args = slice.call(arguments, 0);
-		return function() {
+		return function () {
 			var a = merge(args, arguments);
 			return __method.apply(this, a);
-		}
+		};
 	}
 
 	function delay(timeout) {
 		var __method = this, args = slice.call(arguments, 1);
-		timeout = timeout * 1000
-		return window.setTimeout(function() {
+		timeout = timeout * 1000;
+		return window.setTimeout(function () {
 			return __method.apply(__method, args);
 		}, timeout);
 	}
@@ -68,19 +76,22 @@ Object.extend(Function.prototype, (function() {
 
 	function wrap(wrapper) {
 		var __method = this;
-		return function() {
+		return function () {
 			var a = update([__method.bind(this)], arguments);
 			return wrapper.apply(this, a);
-		}
+		};
 	}
 
 	function methodize() {
-		if (this._methodized) return this._methodized;
+		if (this._methodized) {
+			return this._methodized;
+		}
 		var __method = this;
-		return this._methodized = function() {
+		this._methodized = function () {
 			var a = update([this], arguments);
 			return __method.apply(null, a);
 		};
+		return this._methodized;
 	}
 
 	return {
@@ -92,16 +103,17 @@ Object.extend(Function.prototype, (function() {
 		defer: defer,
 		wrap:								wrap,
 		methodize: methodize
-	}
+	};
 })());
 
 
-var Class = exports.Class = (function() {
-	function subclass() {};
+var Class = exports.Class = (function () {
+	function subclass() {}
 	function create() {
 		var parent = null, properties = Array.prototype.slice.call(arguments);
-		if (typeof properties[0] == 'function')
+		if (typeof properties[0] == 'function') {
 			parent = properties.shift();
+		}
 
 		function klass() {
 			this.initialize.apply(this, arguments);
@@ -113,32 +125,36 @@ var Class = exports.Class = (function() {
 
 		if (parent) {
 			subclass.prototype = parent.prototype;
-			klass.prototype = new subclass;
+			klass.prototype = new subclass();
 			parent.subclasses.push(klass);
 		}
 
-		for (var i = 0; i < properties.length; i++)
+		for (var i = 0; i < properties.length; i++) {
 			klass.addMethods(properties[i]);
+		}
 
-		if (!klass.prototype.initialize)
+		if (!klass.prototype.initialize) {
 			klass.prototype.initialize = function () {};
+		}
 
 		klass.prototype.constructor = klass;
 		return klass;
 	}
 
 	function addMethods(source) {
-		if(!source) {
+		if (!source) {
 			return this;
 		}
 		var ancestor = this.superclass && this.superclass.prototype;		
 		var properties = Object.keys(source);
 
 		if (!Object.keys({ toString: true }).length) {
-			if (source.toString != Object.prototype.toString)
+			if (source.toString != Object.prototype.toString) {
 				properties.push("toString");
-			if (source.valueOf != Object.prototype.valueOf)
+			}
+			if (source.valueOf != Object.prototype.valueOf) {
 				properties.push("valueOf");
+			}
 		}
 
 		for (var i = 0, length = properties.length; i < length; i++) {
@@ -146,8 +162,10 @@ var Class = exports.Class = (function() {
 			if (ancestor && typeof value == 'function' &&
 					value.argumentNames()[0] == "$super") {
 				var method = value;
-				value = (function(m) {
-					return function() { return ancestor[m].apply(this, arguments); };
+				value = (function (m) {
+					return function () {
+						return ancestor[m].apply(this, arguments);
+					};
 				})(property).wrap(method);
 
 				value.valueOf = method.valueOf.bind(method);

@@ -20,8 +20,8 @@ var Model = exports.Model = Class.create({
 				throw 'Invalid filter type';
 			}
 
-			app.db.collection(this.collection, function(error, collection) {
-				collection.findOne(filter, function(error, doc) {
+			app.db.collection(this.collection, function (error, collection) {
+				collection.findOne(filter, function (error, doc) {
 					if (doc === undefined) {
 						this.doc = {};
 					} else {
@@ -63,7 +63,7 @@ var Model = exports.Model = Class.create({
 			}
 		}
 
-		app.db.collection(this.collection, function(error, collection) {
+		app.db.collection(this.collection, function (error, collection) {
 			if (error) {
 				callback(error);
 			} else {
