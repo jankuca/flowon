@@ -14,7 +14,7 @@ var Model = exports.Model = Class.create({
 		if (filter !== undefined && typeof filter != 'function') {
 			if (typeof filter == 'string') {
 				filter = {
-					'_id': filter
+					'_id': new app.db.pkFactory(filter)
 				};
 			} else if (typeof filter != 'object') {
 				throw 'Invalid filter type';
@@ -67,7 +67,11 @@ var Model = exports.Model = Class.create({
 			if (error) {
 				callback(error);
 			} else {
-				collection.save(this.doc, {}, callback);
+				collection.save(this.doc, {}, function (error) {
+					if (typeof callback == 'function') {
+						callback(error);
+					}
+				}.bind(this));
 			}
 		}.bind(this));
 	},
