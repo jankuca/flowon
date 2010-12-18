@@ -5,10 +5,11 @@ var Path = require('path'),
 exports.Controller = Class.create({
 	'_headers': {},
 	'_status': 200,
+	'_format': 'html',
 
 	'initialize': function () {
 		this.template = new Template();
-		this.template._layout_path = Path.join(app._cfg.app_dir, 'templates', this._namespace, '@layout.html.ejs');
+		this.template._layout_path = Path.join(app._cfg.app_dir, 'templates', this._namespace, '@layout.' + this._format + '.ejs');
 	},
 
 	'header': function (key, value) {
@@ -25,7 +26,7 @@ exports.Controller = Class.create({
 		if (arguments.length == 2) {
 			message = arguments[1];
 			if (typeof arguments[0] == 'number') {
-				template_path = app.__dirname + 'templates/error.html.ejs';
+				template_path = app.__dirname + 'templates/error.' + this._format + '.ejs';
 			} else {
 				template_path = arguments[0];
 			}
@@ -60,7 +61,7 @@ exports.Controller = Class.create({
 			this._status = status;
 		}
 
-		this.template._path = Path.join(app._cfg.app_dir, 'templates', this._namespace, this._name, this._view + '.html.ejs');
+		this.template._path = Path.join(app._cfg.app_dir, 'templates', this._namespace, this._name, this._view + '.' + this._format + '.ejs');
 		this.template.render(function (error, body) {
 			if (error) {
 				return this.terminate(503, error);
