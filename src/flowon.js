@@ -206,10 +206,40 @@ FlowOn._handleRequest = function (request, response) {
 			return;
 		}
 
-		controller.request = request;
-		controller._method = 'GET';
-		controller.response = response;
-		controller[route.view](route.params);
+		// start session
+		var session,
+			cookie_header = request.headers.cookie,
+			cookies = {},
+			cookie;
+		if (cookie_header !== undefined) {
+			var header = cookie_header.match(/[^=]+=[^=:;]*/g);
+			for (var i = 0, ii = header.length; i < ii; ++i) {
+				cookie = header[i].split('=');
+				cookies[cookie[0]] = cookie[1];
+			}
+		}
+
+		var date = new Date();
+		var _callView = function (session) {
+			date.setDate(date.getDate() + 1);
+			controller._headers['Set-Cookie'] = 'FLOWONSESSID=' + session.getId() + '; expires=' + date.toUTCString() + '; path=/';
+
+			controller.request = request;
+			controller._method = 'GET';
+			controller.response = response;
+			controller[route.view](route.params);
+		}.bind(this);
+
+		new Session(cookies['FLOWONSESSID'], function (session) {
+			controller._session = session;
+
+			if(!session.exists()) {
+				session['date:created'] = Math.floor(date.getTime() / 1000);
+				session.save(_callView.bind(this, session));
+			} else {
+				_callView(session);
+			}
+		});
 	}.bind(this));
 };
 
@@ -218,4 +248,6 @@ global.app = FlowOn;
 
 var Model = require('./modules/model.js').Model;
 
-this.FlowOn = FlowOn;
+var Session = Class.create(Model, {
+	'collection': 'sessions'
+});
