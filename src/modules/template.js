@@ -44,13 +44,13 @@ var Template = exports.Template = Class.create({
 				if (!this._layout_path) {
 					callback(null, html);
 				} else {
-					Path.exists(this._layout_path, 'UTF-8', function (exists) {
+					Path.exists(this._layout_path, function (exists) {
 						if (!exists) {
 							callback('Missing template: ' + this._layout_path);
 							return;
 						}
 
-						FileSystem.readFile(path, function (error, file) {
+						FileSystem.readFile(this._layout_path, 'UTF-8', function (error, file) {
 							if (error) {
 								switch (error.errno) {
 								case 21: // EISDIR
