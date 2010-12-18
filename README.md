@@ -66,18 +66,18 @@ Controller files are stored in the `app_dir/controllers/` directory. Router name
 		// Define the 'show' view
 		'show': function (params) {
 			new User({ 'id': params.id }, function (user) {
-				this.response.writeHead(200);
-				this.response.write(JSON.stringify(user.doc));
-				this.response.end();
-			}.bind(this)); // Prototype context binding; this in the function will reference the controller instance
+				this.template.user = user;
+				this.render(200);
+			}.bind(this)); // Prototype context binding; "this" in the function will reference the controller instance
 		},
 
 		'friends': function(params) {
 			new User({ 'id': params.id }, function (user) {
 				user.getFriends(['users:realname'], function (friends) {
-					this.response.writeHead(200);
-					this.response.write(JSON.stringify(friends));
-					this.response.end();
+					friends.toArray(function (error, friends) {
+						this.template.friends = friends.toArray();
+						this.render(200);
+					}.bind(this));
 				}.bind(this));
 			}.bind(this));
 		}
@@ -89,7 +89,7 @@ It is recommended to inherit from the supplied Model class.
 
 > Note that all field keys are namespaced as `NAMESPACE:KEY`. You can skip the namespace but have to leave the colon (`:KEY`).
 
-	// app_dir/models/user.js
+	// app_dir/models/user.js:
 
 	// Require needed modules
 	var Class = require(app.__dirname + 'modules/class.js').Class,
@@ -124,3 +124,35 @@ It is recommended to inherit from the supplied Model class.
 		}
 	});
 
+## Views / templates
+
+FlowOn uses [EmbeddedJS](http://embeddedjs.com/) as its template engine.
+
+Template files are stored in the `app_dir/templates/` directory. Router namespaces are also applied to this directory. Then, the full path is `app_dir/templates/[namespace/]controller/view.format.ejs`
+
+> In the terms of providing the correct mime-type, only the `html` format is currently supported. Any other format will be send as text/plain.
+
+	// app_dir/templates/user/show.html.ejs:
+
+	<h1>Profile of <%= user['users:realname'] %></h1>
+
+### Layouts
+
+Every view can be encapsulated in a layout. Layout can be disabled by setting the `Controller#_layout_path` property to `undefined`.
+
+Layout template files are stored in the same directory as regular view files, but prefixed with `@`. For instance, the full path of an HTML layout for the `admin` namespace is `app_dir/templates/admin/@layout.html.ejs`.
+
+In the layout, there is the content of the current view accessible as `$content`.
+
+	// app_dir/templates/@layout.html.ejs:
+	
+	<!DOCTYPE html>
+	<html>
+	...
+	<body>
+	<h1>FlowOn readme example</h1>
+	
+	<%= $content %>
+	
+	</body>
+	</html>
