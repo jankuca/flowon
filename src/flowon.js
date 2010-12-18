@@ -246,8 +246,4 @@ FlowOn._handleRequest = function (request, response) {
 exports.FlowOn = FlowOn;
 global.app = FlowOn;
 
-var Model = require('./modules/model.js').Model;
-
-var Session = Class.create(Model, {
-	'collection': 'sessions'
-});
+var Session = require('./modules/models/session.js').Model;
