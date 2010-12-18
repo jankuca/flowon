@@ -107,7 +107,7 @@ It is recommended to inherit from the supplied Model class.
 			var friend_refs = this.doc.friends || [],
 				friend_ids = [];
 			for (var i = 0, ii = friend_refs.length; i < ii; ++i) {
-				friend_ids.push(friend_refs[i].$id);
+				friend_ids.push(app.db.pkFactory(friend_refs[i].$id));
 			}
 
 			app.db.collection(this.collection, function (error, collection) {
