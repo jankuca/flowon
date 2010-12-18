@@ -228,9 +228,12 @@ FlowOn._handleRequest = function (request, response) {
 			date.setDate(date.getDate() + 1);
 			controller._headers['Set-Cookie'] = 'FLOWONSESSID=' + session.getId() + '; expires=' + date.toUTCString() + '; path=/';
 
-			controller.request = request;
-			controller._method = 'GET';
-			controller.response = response;
+			controller._request = request;
+			controller._method = request.method;
+			controller._response = response;
+			controller._namespace = route.namespace;
+			controller._name = route.controller;
+			controller._view = route.view;
 			controller[route.view](route.params);
 		}.bind(this);
 
