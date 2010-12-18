@@ -2,9 +2,7 @@ var Http = require('http'),
 	Url = require('url'),
 	Path = require('path'),
 	FileSystem = require('fs'),
-	Class = require('./modules/class.js').Class,
-	Model = require('./modules/model.js').Model;
-
+	Class = require('./modules/class.js').Class;
 
 var Router = function () {
 	this._ns = '';
@@ -215,8 +213,9 @@ FlowOn._handleRequest = function (request, response) {
 	}.bind(this));
 };
 
-FlowOn.createController = function(key, parent_key) {
-	return function () {}
-};
+exports.FlowOn = FlowOn;
+global.app = FlowOn;
+
+var Model = require('./modules/model.js').Model;
 
 this.FlowOn = FlowOn;
