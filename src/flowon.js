@@ -103,6 +103,14 @@ var FlowOn = {
 FlowOn.set = function (key, value) {
 	this._cfg[key] = value;
 };
+FlowOn.setMemcached = function (client) {
+	if (client) {
+		this.memcached_client = client;
+	}
+};
+FlowOn.getMemcached = function () {
+	return this.memcached_client;
+};
 FlowOn.getRouter = function () {
 	return this._router;
 };
