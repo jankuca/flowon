@@ -76,41 +76,5 @@ var Template = exports.Template = Class.create({
 				}.bind(this));
 			}.bind(this));
 		}.bind(this));
-	},
-
-	/*'_renderLayout': function ($content, callback) {
-		Path.exists(this._layout_path, function (exists) {
-			if (!exists) {
-				callback('Missing template: ' + this._layout_path);
-				return;
-			}
-
-			FileSystem.readFile(this._layout_path, 'UTF-8', function (error, file) {
-				if (error) {
-					switch (error.errno) {
-					case 21: // EISDIR
-						callback('Missing template: ' + this._layout_path);
-						break;
-					default:
-						callback('Invalid template: ' + this._layout_path);
-						break;
-					}
-					return;
-				}
-
-				var html;
-				var ejs = new EJS({
-					'text': file
-				});
-				this.$content = $content;
-
-				try {
-					html = ejs.render(this);
-					callback(null, html);
-				} catch (exc) {
-					callback('EJS: ' + JSON.stringify(exc));
-				}
-			}.bind(this));
-		}.bind(this));
-	}*/
+	}
 });
