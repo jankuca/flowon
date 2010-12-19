@@ -1,2 +1,41 @@
-<h1>Error <%= status %></h1>
-<p><%= message || 'An error occured.' %></p>
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8" />
+	<title>Error</title>
+	<style type="text/css">
+* {
+	margin: 0;
+	padding: 0;
+}
+body {
+	background: #222;
+	color: #CCC;
+	font-family: sans-serif;
+}
+#message {
+	margin: 100px 100px 25px;
+	padding: 25px;
+	border-top: 1px solid #FFF;
+	border-radius: 10px;
+	background: #F5F5F5;
+	background-clipping: padding-box;
+	color: #222;
+}
+p.title {
+	padding-bottom: 5px;
+	border-bottom: 1px solid #CCC;
+	font-size: 14px;
+}
+p.message {
+	margin-top: 15px;
+	font-size: 16px;
+	font-weight: bold;
+}
+	</style>
+</head>
+<body>
+<div id="message">
+	<p class="title">Error <%= status %></p>
+	<p class="message"><%= message || 'An error occured.' %></p>
+</div>
