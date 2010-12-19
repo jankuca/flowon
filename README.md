@@ -22,7 +22,7 @@ FlowOn is a very simple but powerful MVC framework for building RIAs.
 	app.set('db_name', 'test');
 	app.set('db_server', '127.0.0.1');
 	app.set('db_port', 27017);
-	app.db_driver = mongodb;
+	app.setDbDriver(mongodb);
 
 	// Set up routes
 	// The namespace is initially empty (i.e. the domain root)
@@ -91,7 +91,7 @@ Controller files are stored in the `app_dir/controllers/` directory. Router name
 
 It is recommended to inherit from the supplied Model class.
 
-Model files are stored in the `app_dir/models/` directory. Router namespaces are no applied to this directory.
+Model files are stored in the `app_dir/models/` directory. Router namespaces are not applied to this directory.
 
 > Note that all field keys are namespaced as `NAMESPACE:KEY`. You can skip the namespace but have to leave the colon (`:KEY`).
 
@@ -153,6 +153,8 @@ Template files are stored in the `app_dir/templates/` directory. Router namespac
 	<% } %>
 	</ul>
 
+All templates are cached so that EmbeddedJS does not have to compile the markup for every request. The Template class checks for changes and discards the cached version in case the original template file changed.
+
 ### Layouts
 
 Every view can be encapsulated in a layout. Layout can be disabled by setting the `Controller#_layout_path` property to `undefined`.
@@ -173,3 +175,37 @@ In the layout, there is the content of the current view accessible as `$content`
 
 	</body>
 	</html>
+
+## Caching
+
+The framework provides a very simple way to cache data. The Cache class can also interact with the widely used Memcached service.
+
+If Memcached is not available, the system uses file-based cache located in the `app_dir/cache` directory.
+
+	Cache.set('namespace', 'key', 'data', '+ 10 minutes', function () {
+		// It looks like everything is OK even if the caching process failed.
+		// It can happen and it is usually not a big deal.
+
+		console.log('Cached!');
+	});
+
+	Cache.get('namespace', 'key', function (cache) {
+
+		// Structure of the `cache` object:
+		// {
+		//   data: string - the actual cached data
+		//   created: number - unix timestamp
+		//   expires: number - unix timestamp; 0 = never expires
+		// }
+
+		var data;
+		if (!cache) {
+			// ... a time consuming operation ...
+		} else {
+			console.log('Cache loaded!', cache);
+		}
+	});
+
+	Cache.remove('namespace, 'key', function () {
+		console.log('Removed!');
+	});
