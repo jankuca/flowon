@@ -11,6 +11,11 @@ var Cache = exports.Cache = Class.create({
 });
 
 Cache.get = function (namespace, key, callback) {
+	// We do not need to bother with getting the data if there is no callback specified
+	if (typeof callback != 'function') {
+		return;
+	}
+
 	key = Base64.encode(key);
 	var memcached = app.getMemcached();
 	// Check if we are using memcached; if not, fall back to file cache
@@ -167,4 +172,32 @@ Cache.set = function (namespace, key, data, expires, callback) {
 			}
 		});
 	}
+};
+
+Cache.remove = function (namespace, key, callback) {
+	key = Base64.encode(key);
+	var memcached = app.getMemcached();
+	// Check if we are using memcached; if not, fall back to file cache
+	if (memcached) {
+		memcached.on('connect', function () {
+			memcached['delete'](namespace + ':' + key, callback);
+		});
+		memcached.once('error', function (error) {
+			console.log('error connecting to memcached');
+			if (typeof callback == 'function') {
+				callback();
+			}
+		});
+		memcached.connect();
+	} else {
+		var path = Path.join(app._cfg.app_dir, 'cache', namespace + '__' + key);
+		Path.exists(path, function (exists) {
+			if (!exists) {
+				callback();
+				return;
+			}
+
+			FileSystem.unlink(path, callback);
+		});
+	}	
 };
