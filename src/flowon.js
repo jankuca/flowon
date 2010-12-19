@@ -103,6 +103,11 @@ var FlowOn = {
 FlowOn.set = function (key, value) {
 	this._cfg[key] = value;
 };
+FlowOn.setDbDriver = function (driver) {
+	if (driver) {
+		this.db_driver = driver;
+	}
+};
 FlowOn.setMemcached = function (client) {
 	if (client) {
 		this.memcached_client = client;
