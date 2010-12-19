@@ -86,6 +86,11 @@ Cache.get = function (namespace, key, callback) {
 };
 
 Cache.set = function (namespace, key, data, expires, callback) {
+	if (typeof expires == 'function') {
+		callback = expires;
+		expires = undefined;
+	}
+
 	key = Base64.encode(key);
 
 	var add = 0,
