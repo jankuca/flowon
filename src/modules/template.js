@@ -1,7 +1,7 @@
 var Path = require('path'),
 	FileSystem = require('fs'),
 	Class = require(app.__dirname + 'modules/class.js').Class,
-	EJS = require(app.__dirname + '../lib/ejs.js').EJS;
+	EJS = require(app.__dirname + '../lib/ejs/ejs.js').EJS;
 
 var Template = exports.Template = Class.create({
 	'render': function (callback) {
