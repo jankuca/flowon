@@ -3,7 +3,10 @@ var Path = require('path'),
 	Template = require(app.__dirname + 'modules/template.js').Template;
 
 exports.Controller = Class.create({
+	'_rendered': false,
 	'_format': 'html',
+
+	'NO_EXECUTION_LIMIT': 2,
 
 	'initialize': function () {
 		this.template = new Template();

@@ -5,6 +5,7 @@ var Http = require('http'),
 	Class = require('./modules/class.js').Class;
 
 var Session,
+	Controller,
 	HttpResponse;
 
 var Router = function () {
@@ -93,7 +94,8 @@ Router.prototype.match = function (uri) {
 var FlowOn = {
 	'_cfg': {
 		'port': 8124,
-		'db_type': null
+		'db_type': null,
+		'max_execution_time': 2
 	},
 	'_controllers': {},
 	'__dirname': __dirname + '/',
@@ -212,7 +214,6 @@ FlowOn._handleRequest = function (request, response) {
 	path = Path.join(this._cfg.app_dir, 'controllers', route.namespace, route.controller + '.js');
 	Path.exists(path, function (exists) {
 		if (!exists) {
-			var Controller = require(this.__dirname + 'modules/controller.js').Controller;
 			var controller = new Controller();
 			controller._request = request;
 			controller._method = request.method;
@@ -223,7 +224,6 @@ FlowOn._handleRequest = function (request, response) {
 
 		var module = require(path);
 		if (module.Controller === undefined) {
-			var Controller = require(this.__dirname + 'modules/controller.js').Controller;
 			var controller = new Controller();
 			controller._request = request;
 			controller._method = request.method;
@@ -262,7 +262,21 @@ FlowOn._handleRequest = function (request, response) {
 			controller._namespace = route.namespace;
 			controller._name = route.controller;
 			controller._view = route.view;
-			controller[route.view](route.params);
+
+			var execution_timeout = setTimeout(
+				function () {
+					controller.terminate(503, 'Reached the maximum execution time of ' + this._cfg.max_execution_time + 's.');
+				}.bind(this),
+				this._cfg.max_execution_time * 1000
+			);
+
+			var mode = controller[route.view](route.params);
+			if (mode !== undefined) {
+				switch (mode) {
+				case controller.NO_EXECUTION_LIMIT:
+					clearTimeout(execution_timeout);
+				}
+			}
 		}.bind(this);
 
 		var session = new Session(cookies.FLOWONSESSID, function (session) {
@@ -283,3 +297,4 @@ global.app = FlowOn;
 
 Session = require('./modules/models/session.js').Model;
 HttpResponse = require('./modules/httpresponse.js').HttpResponse;
+Controller = require('./modules/controller.js').Controller;
