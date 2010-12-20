@@ -3,8 +3,6 @@ var Path = require('path'),
 	Template = require(app.__dirname + 'modules/template.js').Template;
 
 exports.Controller = Class.create({
-	'_headers': {},
-	'_status': 200,
 	'_format': 'html',
 
 	'initialize': function () {
@@ -13,12 +11,16 @@ exports.Controller = Class.create({
 	},
 
 	'header': function (key, value) {
-		this._headers[key.toLowerCase()] = value;
+		if (value === undefined) {
+			return this._response.getHeader(key);
+		} else {
+			this._response.setHeader(key, value);
+		}
 	},
 
 	'terminate': function (status, template_path, message) {
 		if (typeof arguments[0] == 'number') {
-			this._status = arguments[0];
+			this._response.status = arguments[0];
 		} else if (arguments.length === 1) {
 			message = arguments[0];
 		}
@@ -35,22 +37,18 @@ exports.Controller = Class.create({
 		var template = new Template();
 		template._path = template_path;
 
-		template.status = this._status;
+		template._response = this._response;
 		template.message = message;
 
 		template.render(function (error, body) {
 			if (error) {
-				this._response.writeHead(this._status, {
-					'content-type': 'text/plain; charset=UTF-8'
-				});
+				this.header('content-type', 'text/plain; charset=UTF-8');
 				this._response.write(message + "\n\n" + error);
 				this._response.end();
 				return;
 			}
 
-			this._response.writeHead(this._status, {
-				'content-type': 'text/html; charset=UTF-8'
-			});
+			this._response.header('content-type', 'text/html; charset=UTF-8');
 			this._response.write(body);
 			this._response.end();
 		}.bind(this));
@@ -58,7 +56,7 @@ exports.Controller = Class.create({
 
 	'render': function (status) {
 		if (typeof status == 'number') {
-			this._status = status;
+			this._response.status = status;
 		}
 
 		this.template._path = Path.join(app._cfg.app_dir, 'templates', this._namespace, this._name, this._view + '.' + this._format + '.ejs');
@@ -67,17 +65,17 @@ exports.Controller = Class.create({
 				return this.terminate(503, error);
 			}
 
-			if (this._headers['content-type'] === undefined) {
+			if (this._response.headers['content-type'] === undefined) {
 				var e = this.template._path.split('.');
 				switch (e[e.length - 2] || 'txt') {
 				case 'html':
-					this._headers['content-type'] = 'text/html; charset=UTF-8';
+					this.header('content-type', 'text/html; charset=UTF-8');
 					break;
 				default:
-					this._headers['content-type'] = 'text/plain; charset=UTF-8';
+					this.header('content-type', 'text/plain; charset=UTF-8');
 				}
 			}
-			this._response.writeHead(this._status, this._headers);
+
 			this._response.write(body);
 			this._response.end();
 		}.bind(this));

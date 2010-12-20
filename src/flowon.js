@@ -4,7 +4,8 @@ var Http = require('http'),
 	FileSystem = require('fs'),
 	Class = require('./modules/class.js').Class;
 
-var Session;
+var Session,
+	HttpResponse;
 
 var Router = function () {
 	this._ns = '';
@@ -238,8 +239,8 @@ FlowOn._handleRequest = function (request, response) {
 
 		var date = new Date();
 		var _callView = function (session) {
-			date.setDate(date.getDate() + 1);
-			controller._headers['Set-Cookie'] = 'FLOWONSESSID=' + session.getId() + '; expires=' + date.toUTCString() + '; path=/';
+			response = new HttpResponse(response);
+			response.setCookie('FLOWONSESSID', session.getId(), '+ 1 day', undefined, request.host, false, true);
 
 			controller._request = request;
 			controller._method = request.method;
@@ -267,3 +268,4 @@ exports.FlowOn = FlowOn;
 global.app = FlowOn;
 
 Session = require('./modules/models/session.js').Model;
+HttpResponse = require('./modules/httpresponse.js').HttpResponse;
