@@ -48,7 +48,7 @@ FlowOn is a very simple but powerful MVC framework for building RIAs.
 	});
 
 	router.namespace(null);
-	// You can also set a wildcard routes
+	// You can also set wildcard routes
 	router.push('/:_c/:_v', {
 		'controller': ':_c', // reference the parameter :_c
 		'view': ':_v', // reference the parameter :_v
@@ -158,7 +158,7 @@ Template files are stored in the `app_dir/templates/` directory. Router namespac
 	<h1>Profile of <%= user['users:realname'] %></h1>
 
 
-	// app_dir/templates/user/friends.html.ejs
+	// app_dir/templates/user/friends.html.ejs:
 
 	<h1>Friends of <%= user['users:realanme'] %></h1>
 
