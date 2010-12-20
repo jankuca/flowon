@@ -25,7 +25,12 @@ var Template = exports.Template = Class.create({
 					ejs = new EJS({
 						'precompiled': cache.data
 					});
-					html = ejs.render(this);
+					try {
+						html = ejs.render(this);
+					} catch (exc) {
+						callback('Template error: ' + exc.message);
+						return;
+					}
 
 					if (!this._layout_path) {
 						callback(null, html);
@@ -61,7 +66,7 @@ var Template = exports.Template = Class.create({
 
 						Cache.set('ejs_compiled', this._path, ejs.out());
 					} catch (exc) {
-						callback('EJS: ' + JSON.stringify(exc));
+						callback('Template error: ' + exc.message);
 						return;
 					}
 

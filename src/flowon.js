@@ -180,12 +180,20 @@ FlowOn._handleRequest = function (request, response) {
 				if (error) {
 					switch (error.errno) {
 					case 21: // EISDIR
-						response.writeHead(403);
-						response.write('Directory listing is not allowed.');
-						break;
+						var Controller = require(this.__dirname + 'modules/controller.js').Controller;
+						var controller = new Controller();
+						controller._request = request;
+						controller._method = request.method;
+						controller._response = new HttpResponse(response);
+						controller.terminate(403, 'Directory listing is not allowed.');
+						return;
 					default:
-						response.writeHead(500);
-						response.write(error.toString());
+						var Controller = require(this.__dirname + 'modules/controller.js').	Controller;
+						var controller = new Controller();
+						controller._request = request;
+						controller._method = request.method;
+						controller._response = new HttpResponse(response);
+						controller.terminate(500, error.toString(error.toString()));
 						break;
 					}
 					response.end();
@@ -195,8 +203,8 @@ FlowOn._handleRequest = function (request, response) {
 				response.writeHead(200);
 				response.write(file, 'binary');
 				response.end();
-			});
-		});
+			}.bind(this));
+		}.bind(this));
 
 		return;
 	}
@@ -204,17 +212,23 @@ FlowOn._handleRequest = function (request, response) {
 	path = Path.join(this._cfg.app_dir, 'controllers', route.namespace, route.controller + '.js');
 	Path.exists(path, function (exists) {
 		if (!exists) {
-			response.writeHead(503);
-			response.write('Missing controller file: ' + route.controller);
-			response.end();
+			var Controller = require(this.__dirname + 'modules/controller.js').Controller;
+			var controller = new Controller();
+			controller._request = request;
+			controller._method = request.method;
+			controller._response = new HttpResponse(response);
+			controller.terminate(404, 'Missing controller file: ' + route.controller);
 			return;
 		}
 
 		var module = require(path);
 		if (module.Controller === undefined) {
-			response.writeHead(503);
-			response.write('The file for the controller ' + route.controller + ' does not match the required output.');
-			response.end();
+			var Controller = require(this.__dirname + 'modules/controller.js').Controller;
+			var controller = new Controller();
+			controller._request = request;
+			controller._method = request.method;
+			controller._response = new HttpResponse(response);
+			controller.terminate(404, 'The file for the controller \'' + route.controller + '\' does not match the required output.');
 			return;
 		}
 
