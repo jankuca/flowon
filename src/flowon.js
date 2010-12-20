@@ -267,6 +267,8 @@ FlowOn._handleRequest = function (request, response) {
 		controller._name = route.controller;
 		controller._view = route.view;
 
+		controller.startup();
+
 		if (controller[route.view] === undefined) {
 			controller.render(200);
 			return;
