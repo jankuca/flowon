@@ -3,6 +3,7 @@ var Class = require(app.__dirname + 'modules/class.js').Class;
 var HttpRequest = exports.HttpRequest = Class.create({
 	'initialize': function (request) {
 		this.request = request;
+		this.host = request.headers.host;
 		this.method = request.method;
 		this.headers = request.headers;
 
