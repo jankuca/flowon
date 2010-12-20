@@ -206,17 +206,15 @@ FlowOn._handleRequest = function (request, response) {
 				if (error) {
 					switch (error.errno) {
 					case 21: // EISDIR
-						var Controller = require(this.__dirname + 'modules/controller.js').Controller;
 						var controller = new Controller();
-						controller._request = request;
+						controller._request = new HttpRequest(request);
 						controller._method = request.method;
 						controller._response = new HttpResponse(response);
 						controller.terminate(403, 'Directory listing is not allowed.');
 						return;
 					default:
-						var Controller = require(this.__dirname + 'modules/controller.js').	Controller;
 						var controller = new Controller();
-						controller._request = request;
+						controller._request = new HttpRequest(request);
 						controller._method = request.method;
 						controller._response = new HttpResponse(response);
 						controller.terminate(500, error.toString(error.toString()));
