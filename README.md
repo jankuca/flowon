@@ -47,6 +47,19 @@ FlowOn is a very simple but powerful MVC framework for building RIAs.
 		'params': app.ROUTER_PARAM_INTEGER // sugar, batch setting
 	});
 
+	router.namespace(null);
+	// You can also set a wildcard routes
+	router.push('/:_c/:_v', {
+		'controller': ':_c', // reference the parameter :_c
+		'view': ':_v', // reference the parameter :_v
+		'params': /^[a-z][a-z0-9\-]*$/
+	});
+	router.push('/:_c', {
+		'controller': ':_c', // reference the parameter :_c
+		'view': 'default',
+		'params': /^[a-z][a-z0-9\-]*$/
+	});
+
 	// Run the app
 	app.run();
 

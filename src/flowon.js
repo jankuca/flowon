@@ -44,10 +44,10 @@ Router.prototype.match = function (uri) {
 		var param_keys = [];
 		var p, pp;
 
-		var placeholders = pattern.match(/:[a-z][\w\-]*/g);
+		var placeholders = pattern.match(/:_?[a-z][\w\-]*/g);
 		if (placeholders !== null) {
 			for (p = 0, pp = placeholders.length; p < pp; ++p) {
-				var placeholder = placeholders[p].match(/^:([a-z][\w\-]*)$/);
+				var placeholder = placeholders[p].match(/^:(_?[a-z][\w\-]*)$/);
 				param_keys.push(placeholder[1]);
 				pattern = pattern.replace(':' + placeholder[1], '([^/]+)');
 			}
@@ -78,6 +78,14 @@ Router.prototype.match = function (uri) {
 
 					params[p] = match[index + 1];
 				}
+			}
+		}
+
+		if (options.controller[0] == ':') {
+			var key = options.controller.substr(1);
+			options.controller = params[key];
+			if (options.controller === undefined) {
+				throw 'Invalid route: Undefined parameter :' + key;
 			}
 		}
 
@@ -173,7 +181,16 @@ FlowOn._handleRequest = function (request, response) {
 	console.log('Requesting ' + uri);
 
 	var path;
-	var route = this._router.match(uri);
+	try {
+		var route = this._router.match(uri);
+	} catch (exc) {
+		var controller = new Controller();
+		controller._request = new HttpRequest(request);
+		controller._method = request.method;
+		controller._response = new HttpResponse(response);
+		controller.terminate(404, exc.message);
+		return;
+	}
 	if (route === null) {
 		console.log('No route for ' + uri + '. Trying to access a static file.');
 
