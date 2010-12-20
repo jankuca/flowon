@@ -7,6 +7,7 @@ var Http = require('http'),
 var Session,
 	Controller,
 	Template,
+	HttpRequest,
 	HttpResponse;
 
 var Router = function () {
@@ -237,36 +238,25 @@ FlowOn._handleRequest = function (request, response) {
 			return;
 		}
 
-		var controller = new module.Controller();
-		if (controller[route.view] === undefined) {
-			response.writeHead(404);
-			response.end();
-			return;
-		}
+		request = new HttpRequest(request);
+		response = new HttpResponse(response);
 
-		// start session
-		var cookie_header = request.headers.cookie,
-			cookies = {},
-			cookie;
-		if (cookie_header !== undefined) {
-			var header = cookie_header.match(/[^=]+=[^=:;]*/g);
-			for (var i = 0, ii = header.length; i < ii; ++i) {
-				cookie = header[i].split('=');
-				cookies[cookie[0]] = cookie[1];
-			}
+		var controller = new module.Controller();
+		controller._request = request;
+		controller._method = request.method;
+		controller._response = response;
+		controller._namespace = route.namespace;
+		controller._name = route.controller;
+		controller._view = route.view;
+
+		if (controller[route.view] === undefined) {
+			controller.render(200);
+			return;
 		}
 
 		var date = new Date();
 		var _callView = function (session) {
-			response = new HttpResponse(response);
 			response.setCookie('FLOWONSESSID', session.getId(), '+ 1 day', undefined, request.host, false, true);
-
-			controller._request = request;
-			controller._method = request.method;
-			controller._response = response;
-			controller._namespace = route.namespace;
-			controller._name = route.controller;
-			controller._view = route.view;
 
 			var execution_timeout = setTimeout(
 				function () {
@@ -284,7 +274,7 @@ FlowOn._handleRequest = function (request, response) {
 			}
 		}.bind(this);
 
-		var session = new Session(cookies.FLOWONSESSID, function (session) {
+		var session = new Session(request.cookies.FLOWONSESSID, function (session) {
 			controller._session = session;
 
 			if (!session.exists()) {
@@ -301,6 +291,7 @@ exports.FlowOn = FlowOn;
 global.app = FlowOn;
 
 Session = require('./modules/models/session.js').Model;
+HttpRequest = require('./modules/httprequest.js').HttpRequest;
 HttpResponse = require('./modules/httpresponse.js').HttpResponse;
 Controller = require('./modules/controller.js').Controller;
 Template = require('./modules/template.js').Template;
