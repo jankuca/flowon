@@ -1,6 +1,7 @@
 var Path = require('path'),
 	FileSystem = require('fs'),
 	Base64 = require(app.__dirname + '../lib/base64/base64.js').Base64,
+	RelativeDate = require(app.__dirname + '../lib/relativedate/relativedate.js'),
 	Class = require(app.__dirname + 'modules/class.js').Class;
 
 var Cache = exports.Cache = Class.create({
@@ -108,34 +109,8 @@ Cache.set = function (namespace, key, data, expires, callback) {
 		if (expires[0] != '+') {
 			expires = 0;
 		} else {
-			var match = expires.match(/^\+\s*(\d+)\s*([a-z]{3})/i);
-			if (!match) {
-				expires = 0;
-			} else {
-				add = parseInt(match[1], 10);
-				expires = now;
-				switch (match[2]) {
-				case 'min':
-					add *= 60;
-					break;
-				case 'hou':
-					add *= 3600;
-					break;
-				case 'day':
-					add *= 3600 * 24;
-					break;
-				case 'week':
-					add *= 3600 * 24 * 7;
-					break;
-				case 'month':
-					add *= 3600 * 24 * 30;
-					break;
-				case 'year':
-					add *= 3600 * 24 * 365;
-					break;
-				}
-				expires += add;
-			}
+			add = RelativeDate.parse(expires);
+			expires += add;
 		}
 	}
 
