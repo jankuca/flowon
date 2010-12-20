@@ -11,6 +11,9 @@ exports.Controller = Class.create({
 	'initialize': function () {
 		this.template = new Template();
 		this.template._layout_path = Path.join(app._cfg.app_dir, 'templates', this._namespace, '@layout.' + this._format + '.ejs');
+
+		// general variables
+		this.template.base_uri = app._cfg.base_uri;		
 	},
 
 	'header': function (key, value) {
@@ -62,6 +65,9 @@ exports.Controller = Class.create({
 		if (typeof status == 'number') {
 			this._response.status = status;
 		}
+
+		// general variables
+		this.template.browser = this._request.browser;
 
 		this.template._path = Path.join(app._cfg.app_dir, 'templates', this._namespace, this._name, this._view + '.' + this._format + '.ejs');
 		this.template.render(function (error, body) {

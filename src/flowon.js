@@ -95,6 +95,7 @@ Router.prototype.match = function (uri) {
 
 var FlowOn = {
 	'_cfg': {
+		'base_uri': '/',
 		'port': 8124,
 		'db_type': null,
 		'max_execution_time': 15
