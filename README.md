@@ -87,6 +87,8 @@ Controller files are stored in the `app_dir/controllers/` directory. Router name
 		}
 	});
 
+> Note that you have to explicitly tell the controller to render the view by calling the `Controller#render` method. There is a maximum execution limit after which the framework renders an error and closes the connection. To prevent this behavior for a single view, the view has to return `Controller#NO_EXECUTION_LIMIT`.
+
 ## Models
 
 It is recommended to inherit from the supplied Model class.
