@@ -262,7 +262,12 @@ FlowOn._handleRequest = function (request, response) {
 			controller._namespace = route.namespace;
 			controller._name = route.controller;
 			controller._view = route.view;
-			controller[route.view](route.params);
+			var result = controller[route.view](route.params);
+
+			// If the view returned "true", leave the connection open
+			if (result !== true) {
+				controller.render(200);
+			}
 		}.bind(this);
 
 		var session = new Session(cookies.FLOWONSESSID, function (session) {
