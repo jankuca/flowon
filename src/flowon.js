@@ -95,7 +95,7 @@ var FlowOn = {
 	'_cfg': {
 		'port': 8124,
 		'db_type': null,
-		'max_execution_time': 2
+		'max_execution_time': 15
 	},
 	'_controllers': {},
 	'__dirname': __dirname + '/',
