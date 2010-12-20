@@ -83,3 +83,23 @@ var Template = exports.Template = Class.create({
 		}.bind(this));
 	}
 });
+
+Template.Helpers = EJS.Helpers.prototype;
+
+Template.loadHelpers = function (dirname, callback) {
+	FileSystem.readdir(dirname, function (error, files) {
+		if (error) {
+			console.error('Could not load template helpers from ' + dirname);
+		} else {
+			for (var i = 0, ii = files.length; i < ii; ++i) {
+				var file = files[i];
+				Template.Helpers[file.split('.')[0]] = require(Path.join(dirname, file)).helper;
+			}
+			console.log('Loaded template helpers from ' + dirname);
+		}
+
+		if (typeof callback == 'function') {
+			callback();
+		}
+	});
+};

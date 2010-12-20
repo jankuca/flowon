@@ -6,6 +6,7 @@ var Http = require('http'),
 
 var Session,
 	Controller,
+	Template,
 	HttpResponse;
 
 var Router = function () {
@@ -148,10 +149,14 @@ FlowOn.run = function () {
 				console.log('Connection to the database failed: ' + error);
 				return;
 			}
+
 			FlowOn._startServer();
 		});
 		break;
 	}
+
+	Template.loadHelpers(Path.join(this.__dirname, 'helpers'));
+	Template.loadHelpers(Path.join(this._cfg.app_dir, 'helpers'));
 };
 
 FlowOn._startServer = function () {
@@ -298,3 +303,4 @@ global.app = FlowOn;
 Session = require('./modules/models/session.js').Model;
 HttpResponse = require('./modules/httpresponse.js').HttpResponse;
 Controller = require('./modules/controller.js').Controller;
+Template = require('./modules/template.js').Template;
