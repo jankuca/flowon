@@ -38,6 +38,7 @@ exports.Controller = Class.create({
 		template._path = template_path;
 
 		template._response = this._response;
+		template.status = this._response.status;
 		template.message = message;
 
 		template.render(function (error, body) {
@@ -48,7 +49,7 @@ exports.Controller = Class.create({
 				return;
 			}
 
-			this._response.header('content-type', 'text/html; charset=UTF-8');
+			this._response.setHeader('content-type', 'text/html; charset=UTF-8');
 			this._response.write(body);
 			this._response.end();
 		}.bind(this));
