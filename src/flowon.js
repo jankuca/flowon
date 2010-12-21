@@ -180,10 +180,16 @@ FlowOn._startServer = function () {
 	this._server = Http.createServer(this._handleRequest.bind(this));
 	this._server.listen(this._cfg.port);
 	
-	console.log('OK... Server is listening on port ' + this._cfg.port + '.');
+	console.log('OK... Server is listening on ' + this._cfg.domain + ':' + this._cfg.port + '.');
 };
 
 FlowOn._handleRequest = function (request, response) {
+	if (this._cfg.domain && request.headers.host.split(':')[0] != this._cfg.domain) {
+		response.writeHead(404);
+		response.end();
+		return;
+	}
+
 	var uri = Url.parse(request.url).pathname;
 	console.log('Requesting ' + uri);
 
