@@ -32,13 +32,17 @@ Router.prototype.match = function (uri) {
 	var routes = this._routes,
 		route,
 		pattern,
-		options,
+		options, _options,
 		regexps;
 
 	__route_loop: for (var r = 0, rr = routes.length; r < rr; ++r) {
 		route = routes[r];
 		pattern = route[1].replace(/\//g, '\\/');
-		options = route[2];
+		_options = route[2];
+		options = {};
+		for (var o in _options) {
+			options[o] = _options[o];
+		}
 
 		var param_keys = [];
 		var p, pp;
