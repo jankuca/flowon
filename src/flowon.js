@@ -117,7 +117,8 @@ Router.prototype.resolve = function (target) {
 		uri,
 		options,
 		regexps,
-		params;
+		params,
+		param_keys;
 	__route_loop: for (var r = 0, rr = routes.length; r < rr; ++r) {
 		route = routes[r];
 		uri = route[1];
@@ -130,6 +131,7 @@ Router.prototype.resolve = function (target) {
 		}
 
 		var p, pp;
+		param_keys = [];
 		params['_c'] = target.controller;
 		params['_v'] = target.view;
 
@@ -138,6 +140,7 @@ Router.prototype.resolve = function (target) {
 		if (placeholders !== null) {
 			for (p = 0, pp = placeholders.length; p < pp; ++p) {
 				var placeholder = placeholders[p].match(/^:(_?[a-z][\w\-]*)$/);
+				param_keys.push(placeholder[1]);
 				if (params[placeholder[1]] === undefined) {
 					continue __route_loop;
 				}
@@ -168,32 +171,30 @@ Router.prototype.resolve = function (target) {
 			continue;
 		}
 
-		var rules = options.params;
+		var rules = options.params,
+			key;
 		if (rules === undefined) {
-			for (p in params) {
-				if (params.hasOwnProperty(p)) {
-					uri = uri.replace(':' + p, params[p]);
-				}
+			for (p = 0, pp = param_keys.length; p < pp; ++p) {
+				key = param_keys[p];
+				uri = uri.replace(':' + key, params[key]);
 			}
 			return (route[0] || '') + uri;
 		} else if (rules instanceof RegExp) {
-			for (p in params) {
-				if (params.hasOwnProperty(p)) {
-					if (!rules.test(params[p])) {
-						continue __route_loop;
-					}
-					uri = uri.replace(':' + p, params[p]);
+			for (p = 0, pp = param_keys.length; p < pp; ++p) {
+				key = param_keys[p];
+				if (!rules.test(params[key])) {
+					continue __route_loop;
 				}
+				uri = uri.replace(':' + key, params[key]);
 			}
 			return (route[0] || '') + uri;
 		} else {
-			for (p in params) {
-				if (params.hasOwnProperty(p)) {
-					if (rules[p] !== undefined && !rules[p].test(params[p])) {
-						continue __route_loop;
-					}
-					uri = uri.replace(':' + p, params[p]);
+			for (p = 0, pp = param_keys.length; p < pp; ++p) {
+				key = param_keys[p];
+				if (rules[key] !== undefined && !params[key].match(rules[key])) {
+					continue __route_loop;
 				}
+				uri = uri.replace(':' + key, params[key]);
 			}
 			return (route[0] || '') + uri;
 		}
