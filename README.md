@@ -191,6 +191,28 @@ In the layout, there is the content of the current view accessible as `$content`
 	</body>
 	</html>
 
+### Helpers
+
+The templating system is extensible via so called helpers. Those are basically functions available in the template files.
+
+Each helper is defined in a separate file in the `app_dir/helpers` directory.
+
+As an example, here is a code for a helper that converts an unix timestamp to the UTC date format:
+
+	// app_dir/helper/unix2utc.js
+
+	exports.helper = function (unix) {
+		return new Date(unix * 1000).toUTCString();
+	};
+
+> Note that every helper function has to be assigned to the `helper` property of the module's `exports` object. The actual function name is taken from the filename.
+
+There is maybe no need to show the usage in a template file -- it's as simple as:
+
+	// *.ejs
+
+	<p>Posted on <%= unix2utc(1234567890) %>.</p>
+
 ## Caching
 
 The framework provides a very simple way to cache data. The Cache class can also interact with the widely used Memcached service.
