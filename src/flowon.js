@@ -39,7 +39,6 @@ Router.prototype.match = function (uri) {
 		route = routes[r];
 		pattern = route[1].replace(/\//g, '\\/');
 		options = route[2];
-		regexps = options.params || {};
 
 		var param_keys = [];
 		var p, pp;
@@ -85,6 +84,14 @@ Router.prototype.match = function (uri) {
 			var key = options.controller.substr(1);
 			options.controller = params[key];
 			if (options.controller === undefined) {
+				throw 'Invalid route: Undefined parameter :' + key;
+			}
+		}
+
+		if (options.view[0] == ':') {
+			var key = options.view.substr(1);
+			options.view = params[key];
+			if (options.view === undefined) {
 				throw 'Invalid route: Undefined parameter :' + key;
 			}
 		}
