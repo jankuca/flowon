@@ -111,6 +111,97 @@ Router.prototype.match = function (uri) {
 	return null;
 };
 
+Router.prototype.resolve = function (target) {
+	var routes = this._routes,
+		route,
+		uri,
+		options,
+		regexps,
+		params;
+	__route_loop: for (var r = 0, rr = routes.length; r < rr; ++r) {
+		route = routes[r];
+		uri = route[1];
+		options = route[2];
+		params = target.params || {};
+
+		// if the namespace does not match, move to the next route
+		if (route.namespace != target.namespace) {			
+			continue;
+		}
+
+		var p, pp;
+		params['_c'] = target.controller;
+		params['_v'] = target.view;
+
+		// check whether there are values for all placeholders in the route pattern
+		var placeholders = uri.match(/:_?[a-z][\w\-]*/g);
+		if (placeholders !== null) {
+			for (p = 0, pp = placeholders.length; p < pp; ++p) {
+				var placeholder = placeholders[p].match(/^:(_?[a-z][\w\-]*)$/);
+				if (params[placeholder[1]] === undefined) {
+					continue __route_loop;
+				}
+			}
+		}
+
+		var r_controller = options.controller;
+		if (r_controller[0] == ':') {
+			var key = r_controller.substr(1);
+			if (params[key] === undefined) {
+				continue;
+			}
+			r_controller = params[key];
+		}
+		if (r_controller != target.controller) {
+			continue;
+		}
+
+		var r_view = options.view;
+		if (r_view[0] == ':') {
+			var key = r_view.substr(1);
+			if (params[key] === undefined) {
+				continue;
+			}
+			r_view = params[key];
+		}
+		if (r_view != target.view) {
+			continue;
+		}
+
+		var rules = options.params;
+		if (rules === undefined) {
+			for (p in params) {
+				if (params.hasOwnProperty(p)) {
+					uri = uri.replace(':' + p, params[p]);
+				}
+			}
+			return (route[0] || '') + uri;
+		} else if (rules instanceof RegExp) {
+			for (p in params) {
+				if (params.hasOwnProperty(p)) {
+					if (!rules.test(params[p])) {
+						continue __route_loop;
+					}
+					uri = uri.replace(':' + p, params[p]);
+				}
+			}
+			return (route[0] || '') + uri;
+		} else {
+			for (p in params) {
+				if (params.hasOwnProperty(p)) {
+					if (rules[p] !== undefined && !rules[p].test(params[p])) {
+						continue __route_loop;
+					}
+					uri = uri.replace(':' + p, params[p]);
+				}
+			}
+			return (route[0] || '') + uri;
+		}
+	}
+
+	return null;
+};
+
 
 var FlowOn = {
 	'_cfg': {
