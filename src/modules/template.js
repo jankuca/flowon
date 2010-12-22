@@ -5,6 +5,14 @@ var Path = require('path'),
 	EJS = require(app.__dirname + '../lib/ejs/ejs.js').EJS;
 
 var Template = exports.Template = Class.create({
+	'setLayout': function (name, format) {
+		if (!name) {
+			this._layout_path = undefined;
+		} else {
+			this._layout_path = Path.join(app._cfg.app_dir, 'templates', this._namespace, '@' + name + '.' + (format || 'html') + '.ejs');
+		}
+	},
+
 	'render': function (callback) {
 		if (!this._path) {
 			callback('No template file path specified');

@@ -13,6 +13,7 @@ exports.Controller = Class.create({
 		this.template._layout_path = Path.join(app._cfg.app_dir, 'templates', this._namespace, '@layout.' + this._format + '.ejs');
 	},
 	'startup': function () {
+		this.template._namespace = this._namespace;
 		// general variables
 		this.template.base_uri = app._cfg.base_uri;
 		this.template.browser = this._request.browser;
