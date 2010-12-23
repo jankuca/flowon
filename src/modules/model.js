@@ -20,6 +20,8 @@ var Model = exports.Model = Class.create({
 				throw 'Invalid filter type';
 			}
 
+			filter['date:deleted'] = { $exists: false };
+
 			app.db.collection(this.collection, function (error, collection) {
 				collection.findOne(filter, function (error, doc) {
 					if (doc === undefined) {
@@ -53,6 +55,19 @@ var Model = exports.Model = Class.create({
 		return (this.doc !== undefined && this.doc._id);
 	},
 	'save': function (callback) {
+		if (!this.exists()) {
+			if (!this['date:created']) {
+				this['date:created'] = Math.round(new Date().getTime() / 1000);
+			}
+			if (!this['date:modified']) {
+				this['date:modified'] = Math.round(new Date().getTime() / 1000);
+			}
+		} else {
+			if (this['date:modified'] == this.doc['date:modified']) {
+				this['date:modified'] = Math.round(new Date().getTime() / 1000);
+			}
+		}
+
 		for (var i in this) {
 			if (this.hasOwnProperty(i)) {
 				if (i.search(':') == -1) {
