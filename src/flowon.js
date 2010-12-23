@@ -255,6 +255,7 @@ var FlowOn = {
 	'__dirname': __dirname + '/',
 	'_router': new Router(),
 
+	'ROUTER_PARAM_HEX': /^[a-f0-9]+$/i,
 	'ROUTER_PARAM_INTEGER': /^\d+$/
 };
 FlowOn.set = function (key, value) {
