@@ -28,12 +28,16 @@ Router.prototype.push = function (pattern, options) {
 		options
 	]);
 };
-Router.prototype.match = function (uri) {
+Router.prototype.match = function (uri, qs) {
 	var routes = this._routes,
 		route,
 		pattern,
 		options, _options,
 		regexps;
+	
+	if (!!qs) {
+		var query = Url.parse('/qs?' + qs, true).query;
+	}
 
 	__route_loop: for (var r = 0, rr = routes.length; r < rr; ++r) {
 		route = routes[r];
@@ -100,6 +104,32 @@ Router.prototype.match = function (uri) {
 			}
 		}
 
+		// query string
+		if (!!qs) {
+			var q;
+			if (rules instanceof RegExp) {
+				for (q in query) {
+					if (query.hasOwnProperty(q)) {
+						if (!rules.test(query[q])) {
+							continue __route_loop;
+						}
+
+						params[q] = query[q];
+					}
+				}
+			} else {
+				for (q in query) {
+					if (rules.hasOwnProperty(p)) {
+						if (!rules[q].test(query[q])) {
+							continue __route_loop;
+						}
+
+						params[q] = query[q];
+					}
+				}
+			}
+		}
+
 		return {
 			'namespace': route[0],
 			'controller': options.controller,
@@ -117,13 +147,23 @@ Router.prototype.resolve = function (target) {
 		uri,
 		options,
 		regexps,
-		params,
+		params = target.params || {},
 		param_keys;
+	
+	var create_qs = function (params, param_keys) {
+		var query = [];
+		for (var p in params) {
+			if (params.hasOwnProperty(p) && ['_c', '_v'].indexOf(p) == -1 && param_keys.indexOf(p) == -1) {
+				query.push(p + '=' + encodeURIComponent(params[p]));
+			}
+		}
+		return (query.length > 0) ? '?' + query.join('&') : '';
+	};
+
 	__route_loop: for (var r = 0, rr = routes.length; r < rr; ++r) {
 		route = routes[r];
 		uri = route[1];
 		options = route[2];
-		params = target.params || {};
 
 		// if the namespace does not match, move to the next route
 		if (route.namespace != target.namespace) {			
@@ -178,7 +218,7 @@ Router.prototype.resolve = function (target) {
 				key = param_keys[p];
 				uri = uri.replace(':' + key, params[key]);
 			}
-			return (route[0] || '') + uri;
+			return (route[0] || '') + uri + create_qs(params, param_keys);
 		} else if (rules instanceof RegExp) {
 			for (p = 0, pp = param_keys.length; p < pp; ++p) {
 				key = param_keys[p];
@@ -187,7 +227,7 @@ Router.prototype.resolve = function (target) {
 				}
 				uri = uri.replace(':' + key, params[key]);
 			}
-			return (route[0] || '') + uri;
+			return (route[0] || '') + uri + create_qs(params, param_keys);
 		} else {
 			for (p = 0, pp = param_keys.length; p < pp; ++p) {
 				key = param_keys[p];
@@ -196,7 +236,7 @@ Router.prototype.resolve = function (target) {
 				}
 				uri = uri.replace(':' + key, params[key]);
 			}
-			return (route[0] || '') + uri;
+			return (route[0] || '') + uri + create_qs(params, param_keys);
 		}
 	}
 
@@ -291,7 +331,7 @@ FlowOn._handleRequest = function (request, response) {
 
 	var path;
 	try {
-		var route = this._router.match(uri);
+		var route = this._router.match(uri, request.url.split('?', 2)[1]);
 	} catch (exc) {
 		var controller = new Controller();
 		controller._request = new HttpRequest(request);
