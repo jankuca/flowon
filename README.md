@@ -172,7 +172,7 @@ All templates are cached so that EmbeddedJS does not have to compile the markup 
 
 ### Layouts
 
-Every view can be encapsulated in a layout. Layout can be disabled by setting the `Controller#_layout_path` property to `undefined`.
+Every view can be encapsulated in a layout. Layout can be disabled by passing `null` as the argument to the `Controller#template.setLayout` method.
 
 Layout template files are stored in the same directory as regular view files, but prefixed with `@`. For instance, the full path of an HTML layout for the `admin` namespace is `app_dir/templates/admin/@layout.html.ejs`.
 
@@ -199,7 +199,7 @@ Each helper is defined in a separate file in the `app_dir/helpers` directory.
 
 As an example, here is a code for a helper that converts an unix timestamp to the UTC date format:
 
-	// app_dir/helper/unix2utc.js
+	// app_dir/helper/unix2utc.js:
 
 	exports.helper = function (unix) {
 		return new Date(unix * 1000).toUTCString();
@@ -209,9 +209,24 @@ As an example, here is a code for a helper that converts an unix timestamp to th
 
 There is maybe no need to show the usage in a template file -- it's as simple as:
 
-	// *.ejs
+	// *.ejs:
 
 	<p>Posted on <%= unix2utc(1234567890) %>.</p>
+
+#### link_to
+
+There is a very important build-in helper -- `link_to`. It is the simpliest way to create links within the app. It takes a string formed from the target namespace, controller and view joined by a colon (`:`).
+
+	// Simple link
+	<a href="<%= link_to('homepage:') %>">Homepage</a>
+
+	// Link with parameters
+	<a href="<%= link_to('user:friends', { 'id': 123 }) %>">Friends</a>
+
+	// Link to another namespace
+	<a href="<% link_to('admin:stats:') %>"></a>
+
+As you can see from the examples, the pattern for the first argument is: `[namespace:]controller:[view]` If the view part is missing, `default` is passed to the router.
 
 ## Caching
 
