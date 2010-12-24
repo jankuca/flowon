@@ -317,7 +317,7 @@ FlowOn._startServer = function () {
 	this._server = Http.createServer(this._handleRequest.bind(this));
 	this._server.listen(this._cfg.port);
 	
-	console.log('OK... Server is listening on ' + this._cfg.domain + ':' + this._cfg.port + '.');
+	console.log('OK... Server is listening on ' + (this._cfg.domain || '*') + ':' + this._cfg.port + '.');
 };
 
 FlowOn._handleRequest = function (request, response) {
