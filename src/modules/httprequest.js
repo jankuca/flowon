@@ -1,7 +1,8 @@
-var Class = require(app.__dirname + 'modules/class.js').Class;
+var QueryString = require('querystring'),
+	Class = require(app.__dirname + 'modules/class.js').Class;
 
 var HttpRequest = exports.HttpRequest = Class.create({
-	'initialize': function (request) {
+	'initialize': function (request, callback) {
 		this.request = request;
 		this.host = request.headers.host;
 		this.method = request.method;
@@ -54,6 +55,18 @@ var HttpRequest = exports.HttpRequest = Class.create({
 				'type': false,
 				'version': '0'
 			}
+		}
+
+		// data (request body)
+		if (request.method == 'POST' || request.method == 'PUT') {
+			request.addListener('data', function (data) {
+				this.data = QueryString.parse(data);
+			}.bind(this));
+			if (typeof callback == 'function') {
+				request.addListener('end', callback);
+			}
+		} else {
+			this.data = null;
 		}
 	}
 });

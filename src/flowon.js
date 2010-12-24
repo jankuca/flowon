@@ -404,69 +404,75 @@ FlowOn._handleRequest = function (request, response) {
 			return;
 		}
 
-		request = new HttpRequest(request);
-		response = new HttpResponse(response);
-
-		var controller = new module.Controller();
-		controller._request = request;
-		controller._method = request.method;
-		controller._response = response;
-		controller._namespace = route.namespace;
-		controller._name = route.controller;
-		controller._view = route.view;
-
-		try {
-			var startup_mode = controller.startup();
-		} catch (exc) {			
-			var controller = new Controller();
+		var _startController = function () {
+			var controller = new module.Controller();
 			controller._request = request;
 			controller._method = request.method;
-			controller._response = new HttpResponse(response);
-			controller.terminate(503, exc);
-			return;
-		}
+			controller._data = request.data;
+			controller._response = response;
+			controller._namespace = route.namespace;
+			controller._name = route.controller;
+			controller._view = route.view;
 
-		if (controller[route.view] === undefined) {
-			if (startup_mode !== false) {
-				controller.render(200);
-			}
-			return;
-		}
-
-		var date = new Date();
-		var _callView = function (session) {
-			response.setCookie('FLOWONSESSID', session.getId(), '+ 1 day', undefined, request.host, false, true);
-
-			var execution_timeout = setTimeout(
-				function () {
-					controller.terminate(503, 'Reached the maximum execution time of ' + this._cfg.max_execution_time + 's.');
-				}.bind(this),
-				this._cfg.max_execution_time * 1000
-			);
-
-			if (startup_mode === false) {
+			try {
+				var startup_mode = controller.startup();
+			} catch (exc) {			
+				var controller = new Controller();
+				controller._request = request;
+				controller._method = request.method;
+				controller._response = new HttpResponse(response);
+				controller.terminate(503, exc);
 				return;
 			}
 
-			var mode = controller[route.view](route.params);
-			if (mode !== undefined) {
-				switch (mode) {
-				case controller.NO_EXECUTION_LIMIT:
-					clearTimeout(execution_timeout);
+			if (controller[route.view] === undefined) {
+				if (startup_mode !== false) {
+					controller.render(200);
 				}
+				return;
 			}
+
+			var date = new Date();
+			var _callView = function (session) {
+				response.setCookie('FLOWONSESSID', session.getId(), '+ 1 day', undefined, '.' + request.host, false, true);
+
+				var execution_timeout = setTimeout(
+					function () {
+						controller.terminate(503, 'Reached the maximum execution time of ' + this._cfg.max_execution_time + 's.');
+					}.bind(this),
+					this._cfg.max_execution_time * 1000
+				);
+
+				if (startup_mode === false) {
+					return;
+				}
+
+				var mode = controller[route.view](route.params);
+				if (mode !== undefined) {
+					switch (mode) {
+					case controller.NO_EXECUTION_LIMIT:
+						clearTimeout(execution_timeout);
+					}
+				}
+			}.bind(this);
+
+			var session = new Session(request.cookies.FLOWONSESSID, function (session) {
+				controller._session = session;
+
+				if (!session.exists()) {
+					session['date:created'] = Math.floor(date.getTime() / 1000);
+					session.save(_callView.bind(this, session));
+				} else {
+					_callView(session);
+				}
+			});
 		}.bind(this);
 
-		var session = new Session(request.cookies.FLOWONSESSID, function (session) {
-			controller._session = session;
-
-			if (!session.exists()) {
-				session['date:created'] = Math.floor(date.getTime() / 1000);
-				session.save(_callView.bind(this, session));
-			} else {
-				_callView(session);
-			}
-		});
+		request = new HttpRequest(request, _startController);
+		response = new HttpResponse(response);
+		if (request.data === null) {
+			_startController();
+		}
 	}.bind(this));
 };
 
