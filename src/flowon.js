@@ -415,10 +415,21 @@ FlowOn._handleRequest = function (request, response) {
 		controller._name = route.controller;
 		controller._view = route.view;
 
-		controller.startup();
+		try {
+			var startup_mode = controller.startup();
+		} catch (exc) {			
+			var controller = new Controller();
+			controller._request = request;
+			controller._method = request.method;
+			controller._response = new HttpResponse(response);
+			controller.terminate(503, exc);
+			return;
+		}
 
 		if (controller[route.view] === undefined) {
-			controller.render(200);
+			if (startup_mode !== false) {
+				controller.render(200);
+			}
 			return;
 		}
 
@@ -432,6 +443,10 @@ FlowOn._handleRequest = function (request, response) {
 				}.bind(this),
 				this._cfg.max_execution_time * 1000
 			);
+
+			if (startup_mode === false) {
+				return;
+			}
 
 			var mode = controller[route.view](route.params);
 			if (mode !== undefined) {
