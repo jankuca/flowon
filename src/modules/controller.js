@@ -58,7 +58,7 @@ exports.Controller = Class.create({
 				return;
 			}
 
-			this._response.setHeader('content-type', 'text/html; charset=UTF-8');
+			this._setContentTypeHeader();
 			this._response.write(body);
 			this._response.end();
 		}.bind(this));
@@ -77,17 +77,24 @@ exports.Controller = Class.create({
 
 			if (this._response.headers['content-type'] === undefined) {
 				var e = this.template._path.split('.');
-				switch (e[e.length - 2] || 'txt') {
-				case 'html':
-					this.header('content-type', 'text/html; charset=UTF-8');
-					break;
-				default:
-					this.header('content-type', 'text/plain; charset=UTF-8');
-				}
+				this._setContentTypeHeader();
 			}
 
 			this._response.write(body);
 			this._response.end();
 		}.bind(this));
+	},
+
+	'_setContentTypeHeader': function (format) {
+		switch (format || this._format || 'txt') {
+		case 'html':
+			this.header('content-type', 'text/html; charset=UTF-8');
+			break;
+		case 'json':
+			this.header('content-type', 'application/json; charset=UTF-8');
+			break;
+		default:
+			this.header('content-type', 'text/plain; charset=UTF-8');
+		}
 	}
 });
