@@ -257,7 +257,7 @@ var Model = Class.create({
 
 		app.db.collection(this.collection_name, function (err, collection) {
 			collection.remove({ _id: this.getId() }, callback);
-		}
+		});
 	}
 });
 
