@@ -1,6 +1,4 @@
-var Class = require(app.__dirname + 'modules/class.js').Class,
-	_Model = require(app.__dirname + 'modules/model.js').Model;
+var Factory = require(app.__dirname + 'modules/model.js').Factory;
 
-var Model = exports.Model = Class.create(_Model, {
-	'collection': 'sessions'
+var Model = exports.Model = Factory.create('sessions', {
 });

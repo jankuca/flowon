@@ -80,21 +80,26 @@ Controller files are stored in the `app_dir/controllers/` directory. Router name
 	var Controller = exports.Controller = Class.create(_Controller, {
 		// Define the 'show' view
 		'show': function (params) {
-			new User({ 'id': params.id }, function (user) {
+			User.one(params.id, function (user) {
+				if (!user.exists()) {
+					return this.terminate(404, 'No such user');
+				}
+
 				this.template.user = user;
 				this.render(200);
 			}.bind(this)); // Prototype context binding; "this" in the function will reference the controller instance
 		},
 
 		'friends': function(params) {
-			new User({ 'id': params.id }, function (user) {
+			User.one(params.id, function (user) {
+				if (!user.exists()) {
+					return this.terminate(404, 'No such user');
+				}
 				this.template.user = user;
 
 				user.getFriends(['users:realname'], function (friends) {
-					friends.toArray(function (error, friends) {
-						this.template.friends = friends.toArray();
-						this.render(200);
-					}.bind(this));
+					this.template.friends = friends.toArray();
+					this.render(200);
 				}.bind(this));
 			}.bind(this));
 		}
@@ -104,7 +109,7 @@ Controller files are stored in the `app_dir/controllers/` directory. Router name
 
 ## Models
 
-It is recommended to inherit from the supplied Model class.
+There is a factory object for defining models.
 
 Model files are stored in the `app_dir/models/` directory. Router namespaces are not applied to this directory.
 
@@ -112,12 +117,11 @@ Model files are stored in the `app_dir/models/` directory. Router namespaces are
 
 	// app_dir/models/user.js:
 
-	// Require needed modules
-	var Class = require(app.__dirname + 'modules/class.js').Class,
-		_Model = require(app.__dirname + 'modules/controller.js').Model;
+	// Require the factory object
+	var Factory = require(app.__dirname + 'modules/model.js').Factory;
 	
-	var Model = exports.Model = Class.create(_Model, {
-		'collection': 'users',
+	var Model = exports.Model = Factory.create('users', {
+		'has_many': [Model, 'friends'],
 
 		'getFriends': function (fields, callback) {
 			if (!this.exists()) {
@@ -125,25 +129,89 @@ Model files are stored in the `app_dir/models/` directory. Router namespaces are
 				return;
 			}
 
-			var friend_refs = this.doc.friends || [],
-				friend_ids = [];
-			for (var i = 0, ii = friend_refs.length; i < ii; ++i) {
-				friend_ids.push(app.db.pkFactory(friend_refs[i].$id));
-			}
-
-			app.db.collection(this.collection, function (error, collection) {
-				collection.find(
-					{
-						_id: { $in: friend_ids }
-					},
-					fields,
-					function (error, cursor) {
-						callback(cursor);
-					}
-				);
-			});
+			this.get('friends', {}, { 'fields': fields, 'sort': 'users:username' }, callback);
 		}
 	});
+
+Every model constructor has two static methods for fetching content from the database -- `Model.one` and `Model.all`.
+
+> The variable `Model` represents any constructor created by the `Factory`. For example the `User` model:
+
+	// get a user by their username
+	User.one({ 'users:username': '...' }, function (user) {
+		if (!user.exists()) {
+			// ... error probably
+		} else {
+			// ...
+		}
+	});
+
+	// get all friends of a user (ID).
+	// Note: This is a reverse operation to the "getFriends" method above.
+	User.all({ 'friends': ID }, { 'sort': 'users:username' }, function (users) {
+		// ... "users" is an array of User model instances
+
+		console.log('The user ' + ID + ' got ' + users.length + 'friends.');
+	});
+
+> Models without a collection name specified represent embedded documents and such models do not have those static methods and are only retrievable using the model#get method.
+
+### Associations
+
+Associations between models are defined by `has_one`, `has_many`, `embeds_one` and `embeds_many` properties.
+
+	// book.js:
+	var Book = Factory.create({
+		'has_many': [Chapter, 'chapters']
+	});
+
+	// chapter.js:
+	var Chapter = Factory.create({
+		'embeds_many': [Paragraph, 'paragraphs']
+	});
+
+	// paragraph.js:
+	var Paragraph = Factory.create({
+
+	});
+
+From the above example, each book document stores IDs of its sub (chapter) documents in its 'chapters' property and each chapter document stores ots sub (paragraph) documents in its 'paragraphs' property.
+
+	book = {
+		'_id': ObjectId(...),
+		'chapters': [
+			ObjectId(...),
+			ObjectId(...)
+		]
+	}
+
+	chapter = {
+		'_id': ObjectId(...),
+		'paragraphs': [
+			{ ... },
+			{ ... }
+		]
+	}
+
+#### Association API
+
+Each model instance (db document representation) with either of the properties mentioned above can be given sub documents via `model#give` and `model#embed`. According to the previous model definitions, this code creates a chapter with one paragraph and stores it in the `book` document.
+
+	var chapter = new Chapter();
+	chapter[':title'] = 'Lorem ipsum';
+
+	var p = new Paragraph();
+	p[':content'] = '...';
+	chapter.embed(p, 'paragraphs');
+
+	chapter.save(function () {
+		book.give(chapter, 'chapters');
+		book.save();
+	});
+
+> Note/todo: There is currently no API method for removing associatied documents. However, the `model#remove` method will eventually be able to clean association to its parent document.
+
+The `model#remove` method removes an object from its collection but does not remove associations from parent documents.
 
 ## Views / templates
 

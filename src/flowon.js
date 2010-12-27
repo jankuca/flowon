@@ -434,6 +434,7 @@ FlowOn._handleRequest = function (request, response) {
 
 			var date = new Date();
 			var _callView = function (session) {
+				controller._session = session;
 				response.setCookie('FLOWONSESSID', session.getId(), '+ 1 day', undefined, '.' + request.host, false, true);
 
 				var execution_timeout = setTimeout(
@@ -456,16 +457,13 @@ FlowOn._handleRequest = function (request, response) {
 				}
 			}.bind(this);
 
-			var session = new Session(request.cookies.FLOWONSESSID, function (session) {
-				controller._session = session;
-
-				if (!session.exists()) {
-					session['date:created'] = Math.floor(date.getTime() / 1000);
-					session.save(_callView.bind(this, session));
-				} else {
-					_callView(session);
-				}
-			});
+			if (request.cookies.FLOWONSESSID) {
+				Session.one(request.cookies.FLOWONSESSID, _callView.bind(this));
+			} else {
+				var session = new Session();
+				session['date:created'] = Math.floor(date.getTime() / 1000);
+				session.save(_callView.bind(this, session));
+			}
 		}.bind(this);
 
 		request = new HttpRequest(request, _startController);
