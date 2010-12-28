@@ -79,11 +79,13 @@ Router.prototype.match = function (uri, qs) {
 			for (p in rules) {
 				if (rules.hasOwnProperty(p)) {
 					var index = param_keys.indexOf(p);
-					if (index == -1 || !rules[p].test(match[index + 1])) {
-						continue __route_loop;
-					}
+					if (index > -1) {
+						if (!rules[p].test(match[index + 1])) {
+							continue __route_loop;
+						}
 
-					params[p] = match[index + 1];
+						params[p] = match[index + 1];
+					}
 				}
 			}
 		}
@@ -119,8 +121,8 @@ Router.prototype.match = function (uri, qs) {
 				}
 			} else {
 				for (q in query) {
-					if (rules.hasOwnProperty(p)) {
-						if (!rules[q].test(query[q])) {
+					if (query.hasOwnProperty(q)) {
+						if (!rules.hasOwnProperty(q) || !rules[q].test(query[q])) {
 							continue __route_loop;
 						}
 
@@ -231,7 +233,7 @@ Router.prototype.resolve = function (target) {
 		} else {
 			for (p = 0, pp = param_keys.length; p < pp; ++p) {
 				key = param_keys[p];
-				if (rules[key] !== undefined && !params[key].match(rules[key])) {
+				if (rules[key] !== undefined && !rules[key].test(params[key])) {
 					continue __route_loop;
 				}
 				uri = uri.replace(':' + key, params[key]);
