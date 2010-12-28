@@ -188,6 +188,7 @@ var Model = Class.create({
 		}
 
 		var embeddable = null;
+		var embedded = false;
 		var obj_many = false;
 
 		var e, ee;
@@ -209,6 +210,26 @@ var Model = Class.create({
 			}
 		}
 		if (embeddable === null) {
+			embedded = true;
+			var embeds_one = this.embeds_one;
+			for (e = 0, ee = embeds_one.length; e < ee; ++e) {
+				if (embeds_one[e][1] == key) {
+					embeddable = embeds_one[e];
+					break;
+				}
+			}
+		}
+		if (embeddable === null) {
+			var embeds_many = this.embeds_many;
+			for (e = 0, ee = embeds_many.length; e < ee; ++e) {
+				if (embeds_many[e][1] == key) {
+					embeddable = embeds_many[e];
+					obj_many = true;
+					break;
+				}
+			}
+		}
+		if (embeddable === null) {
 			throw 'Object not supported';
 		}
 
@@ -220,13 +241,30 @@ var Model = Class.create({
 			}
 			return val;
 		}.bind(this);
-
 		var ids = _getIds(key);
-		selector._id = (obj_many) ? { $in: ids } : ids;
-		selector['date:deleted'] = { $exists: false };
-		options['one'] = !obj_many;
 
-		embeddable[0][obj_many ? 'all' : 'one'](selector, options, callback);
+		if (!embedded) {
+			selector._id = (obj_many) ? { $in: ids } : ids;
+			selector['date:deleted'] = { $exists: false };
+			options['one'] = !obj_many;
+
+			embeddable[0][obj_many ? 'all' : 'one'](selector, options, callback);
+		} else {
+			var res;
+			if (!ids) {
+				res = (obj_many) ? [] : null;
+			} else {
+				res = [];
+				for (var i = 0, ii = ids.length; i < ii; ++i) {					
+					res.push(new embeddable[0](ids[i]));
+				}
+			}
+
+			if (typeof callback == 'function') {
+				callback(res);
+			}
+			return res;
+		}
 	},
 
 	'save': function (callback) {
