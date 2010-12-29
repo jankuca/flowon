@@ -180,6 +180,9 @@ var Class = exports.Class = (function () {
 	return {
 		create: create,
 		Methods: {
+			getPrototype: function () {
+				return this;
+			},
 			addMethods: addMethods
 		}
 	};
