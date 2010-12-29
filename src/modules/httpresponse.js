@@ -16,11 +16,19 @@ var HttpResponse = exports.HttpResponse = Class.create({
 	},
 
 	'getHeader': function (key) {
-		return this.headers[key.toLowerCase()];
+		return this.headers[key.toLowerCase()] || null;
 	},
 
 	'setHeader': function (key, value) {
 		this.headers[key.toLowerCase()] = value;
+	},
+
+	'setHeaders': function (headers) {
+		for (var i in headers) {
+			if (headers.hasOwnProperty(i)) {
+				this.headers[i] = headers[i];
+			}
+		}
 	},
 
 	'setCookie': function (key, value, expires, path, domain, secure, httponly) {
@@ -77,12 +85,12 @@ var HttpResponse = exports.HttpResponse = Class.create({
 		this._head_sent = true;
 	},
 
-	'write': function (content) {
+	'write': function (content, encoding) {
 		if (!this.isHeadSent()) {
 			this.writeHead();
 		}
 
-		this.response.write(content);
+		this.response.write(content, encoding);
 	},
 
 	'end': function () {

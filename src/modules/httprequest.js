@@ -2,9 +2,10 @@ var QueryString = require('querystring'),
 	Class = require(app.__dirname + 'modules/class.js').Class;
 
 var HttpRequest = exports.HttpRequest = Class.create({
-	'initialize': function (request, callback) {
+	'initialize': function (request) {
 		this.request = request;
 		this.host = request.headers.host;
+		this.url = request.url;
 		this.method = request.method;
 		this.headers = request.headers;
 
@@ -62,9 +63,15 @@ var HttpRequest = exports.HttpRequest = Class.create({
 			request.addListener('data', function (data) {
 				this.data = QueryString.parse(data);
 			}.bind(this));
-			if (typeof callback == 'function') {
-				request.addListener('end', callback);
-			}
+			request.addListener('end', function () {
+				if (typeof this.callback == 'function') {
+					this.callback();
+				}
+
+				this.__defineSetter__('callback', function (callback) {
+					callback();
+				});
+			});
 		} else {
 			this.data = null;
 		}

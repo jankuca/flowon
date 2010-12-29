@@ -2,6 +2,7 @@ var Http = require('http'),
 	Url = require('url'),
 	Path = require('path'),
 	FileSystem = require('fs'),
+	EJS = require('../lib/ejs/ejs.js').EJS,
 	Class = require('./modules/class.js').Class;
 
 var Session,
@@ -279,6 +280,31 @@ FlowOn.getMemcached = function () {
 FlowOn.getRouter = function () {
 	return this._router;
 };
+FlowOn.getHeadersByExtension = function (ext) {
+	var headers = {};
+
+	switch (ext) {
+	case '.html':
+		headers['content-type'] = 'text/html; charset=UTF-8';
+		break;
+	case '.js':
+		headers['content-type'] = 'text/javascript; charset=UTF-8';
+		break;
+	case '.css':
+		headers['content-type'] = 'text/css; charset=UTF-8';
+		break;
+	case '.manifest':
+		headers['content-type'] = 'text/cache-manifest; charset=UTF-8';
+	}
+
+	return headers;
+};
+FlowOn.getStaticVariables = function (request) {
+	return {
+		'base_uri': this._cfg.base_uri,
+		'browser': request.browser
+	};
+};
 FlowOn.run = function () {
 	console.log('Starting the server...');
 
@@ -332,24 +358,26 @@ FlowOn._handleRequest = function (request, response) {
 	var uri = Url.parse(request.url).pathname;
 	console.log('Requesting ' + uri);
 
-	var path;
+	request = new HttpRequest(request);
+	response = new HttpResponse(response);
+
 	try {
 		var route = this._router.match(uri, request.url.split('?', 2)[1]);
 	} catch (exc) {
 		var controller = new Controller();
-		controller._request = new HttpRequest(request);
+		controller._request = request;
 		controller._method = request.method;
-		controller._response = new HttpResponse(response);
+		controller._response = response;
 		controller.terminate(404, exc.message);
 		return;
 	}
 	if (route === null) {
 		console.log('No route for ' + uri + '. Trying to access a static file.');
 
-		path = Path.join(this._cfg.public_dir, uri);
+		var path = Path.join(this._cfg.public_dir, uri);
 		Path.exists(path, function (exists) {
 			if (!exists) {
-				response.writeHead(404);
+				response.status = 404;
 				response.end();
 				return;
 			}
@@ -358,17 +386,49 @@ FlowOn._handleRequest = function (request, response) {
 				if (error) {
 					switch (error.errno) {
 					case 21: // EISDIR
-						var controller = new Controller();
-						controller._request = new HttpRequest(request);
-						controller._method = request.method;
-						controller._response = new HttpResponse(response);
-						controller.terminate(403, 'Directory listing is not allowed.');
+						if (uri[uri.length - 1] != '/') {
+							response.status = 301;
+							response.setHeader('location', uri + '/');
+							response.end();
+							return;
+						}
+
+						path = Path.join(path, 'index.html');
+						Path.exists(path, function (exists) {
+							if (!exists) {
+								var controller = new Controller();
+								controller._request = request;
+								controller._method = request.method;
+								controller._response = response;
+								controller.terminate(403, 'Directory listing is not allowed.');
+								return;
+							}
+
+							FileSystem.readFile(path, 'UTF-8', function (error, file) {
+								if (error) {
+									var controller = new Controller();
+									controller._request = request;
+									controller._method = request.method;
+									controller._response = response;
+									controller.terminate(500, error.toString(error.toString()));
+									return;
+								}
+								
+								var ejs = new EJS({
+									'text': file
+								});
+
+								response.setHeaders(this.getHeadersByExtension('.html'));
+								response.write(ejs.render(this.getStaticVariables(request)));
+								response.end();
+							}.bind(this));
+						}.bind(this));
 						return;
 					default:
 						var controller = new Controller();
-						controller._request = new HttpRequest(request);
+						controller._request = request;
 						controller._method = request.method;
-						controller._response = new HttpResponse(response);
+						controller._response = response;
 						controller.terminate(500, error.toString(error.toString()));
 						break;
 					}
@@ -376,8 +436,17 @@ FlowOn._handleRequest = function (request, response) {
 					return;
 				}
 
-				response.writeHead(200);
-				response.write(file, 'binary');
+				var ejs_extensions = ['.html', '.css'],
+					ext = Path.extname(path);
+				response.setHeaders(this.getHeadersByExtension(ext));
+				if (ejs_extensions.indexOf(ext) > -1) {
+					var ejs = new EJS({
+						'text': file
+					});
+					response.write(ejs.render(this.getStaticVariables(request)), 'UTF-8');
+				} else {
+					response.write(file, 'binary');
+				}
 				response.end();
 			}.bind(this));
 		}.bind(this));
@@ -391,7 +460,7 @@ FlowOn._handleRequest = function (request, response) {
 			var controller = new Controller();
 			controller._request = request;
 			controller._method = request.method;
-			controller._response = new HttpResponse(response);
+			controller._response = response;
 			controller.terminate(404, 'Missing controller file: ' + route.controller);
 			return;
 		}
@@ -401,7 +470,7 @@ FlowOn._handleRequest = function (request, response) {
 			var controller = new Controller();
 			controller._request = request;
 			controller._method = request.method;
-			controller._response = new HttpResponse(response);
+			controller._response = response;
 			controller.terminate(404, 'The file for the controller \'' + route.controller + '\' does not match the required output.');
 			return;
 		}
@@ -422,7 +491,7 @@ FlowOn._handleRequest = function (request, response) {
 				var controller = new Controller();
 				controller._request = request;
 				controller._method = request.method;
-				controller._response = new HttpResponse(response);
+				controller._response = response;
 				controller.terminate(503, exc);
 				return;
 			}
@@ -468,8 +537,7 @@ FlowOn._handleRequest = function (request, response) {
 			}
 		}.bind(this);
 
-		request = new HttpRequest(request, _startController);
-		response = new HttpResponse(response);
+		request.callback = _startController;
 		if (request.data === null) {
 			_startController();
 		}
