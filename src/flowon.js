@@ -14,6 +14,7 @@ var Session,
 var Router = function () {
 	this._ns = '';
 	this._routes = [];
+	this._staticNS = [];
 };
 Router.prototype.namespace = function (ns) {
 	if (ns === null) {
@@ -29,7 +30,18 @@ Router.prototype.push = function (pattern, options) {
 		options
 	]);
 };
+Router.prototype.pushStaticNamespace = function (ns) {
+	this._staticNS.push(ns);
+};
 Router.prototype.match = function (uri, qs) {
+	var staticNS = this._staticNS;
+	for (var s = 0, ss = staticNS.length; s < ss; ++s) {
+		var ns = staticNS[s];
+		if (uri == '/' + ns || (new RegExp('^/' + ns + '/')).test(uri)) {
+			return null;
+		}
+	}
+
 	var routes = this._routes,
 		route,
 		pattern,
