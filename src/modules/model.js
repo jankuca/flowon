@@ -260,12 +260,18 @@ var Model = Class.create({
 		}
 
 		app.db.collection(this.collection_name, function (err, collection) {
+			if (err) {
+				throw err;
+			}
+
 			collection.save(this.doc, function (err) {
 				if (err) {
-					throw 'Failed to save the document';
+					throw err;
 				}
 
-				callback();
+				if (typeof callback == 'function') {
+					callback();
+				}
 			});
 		}.bind(this));
 	},
