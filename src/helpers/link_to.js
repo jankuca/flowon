@@ -1,4 +1,4 @@
-exports.helper = function (ncv, params) {
+exports.helper = function (ncv, params, abs) {
 	var router = app.getRouter(),
 		ncv = ncv.split(':'),
 		len = ncv.length,
@@ -7,6 +7,6 @@ exports.helper = function (ncv, params) {
 			'controller': ncv[len - 2] || 'default',
 			'view': ncv[len - 1] || 'default',
 			'params': params
-		});
+		}, abs);
 	return route || 'javascript:;';
 };
