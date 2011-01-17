@@ -5,6 +5,7 @@ var Model = Class.create({
 
 	'initialize': function (doc) {
 		this.doc = doc || {};
+		this._exists = !!this.doc._id;
 
 		if (!doc) {
 			return;
@@ -52,12 +53,12 @@ var Model = Class.create({
 		}
 
 		if (obj_many) {
-			if (this.doc[key] === undefined) {
-				this.doc[key] = [];
+			if (eval('(this.doc.' + key + ' === undefined)')) {
+				eval('(this.doc.' + key + ' = [];)');
 			}
-			this.doc[key].push(obj);
+			eval('(this.doc.' + key + '.push(obj.doc));)');
 		} else {
-			this.doc[key] = obj;
+			eval('(this.doc.' + key + ' = obj.doc;)');
 		}
 
 		return this;
@@ -67,7 +68,7 @@ var Model = Class.create({
 		if (obj === undefined || obj.doc === undefined) {
 			throw 'Invalid state';
 		}
-		if (!obj.exists()) {
+		if (obj.getId() === null) {
 			throw 'The document has not been saved yet.';
 		}
 
@@ -99,24 +100,34 @@ var Model = Class.create({
 			key = embeddable[1];
 		}
 
-		if (obj_many) {
-			if (this.doc[key] === undefined) {
-				this.doc[key] = [];
+		var parts = key.split('.'), cur = [];
+		if (parts.length > 1) {
+			var p, pp;
+			for (p = 0, pp = parts.length - 1; p < pp; ++p) {
+				cur.push(parts[p]);
+				if (eval('this.doc.' + cur.join('.') + ' === undefined')) {
+					eval('this.doc.' + cur.join('.') + ' = {}');
+				}
 			}
-			this.doc[key].push(obj.getId());
+		}
+		if (obj_many) {
+			if (eval('this.doc.' + key + ' === undefined')) {
+				eval('this.doc.' + key + ' = [];');
+			}
+			eval('this.doc.' + key + '.push(obj.getId());');
 		} else {
-			this.doc[key] = obj.getId();
+			eval('this.doc.' + key + ' = obj.getId();');
 		}
 
 		return this;
 	},
 
 	'exists': function () {
-		return (this.doc && this.doc._id);
+		return this._exists;
 	},
 
 	'getId': function (stringify) {
-		return (stringify) ? this.doc._id.toString() : this.doc._id;
+		return (stringify) ? this.doc._id.toString() || '' : this.doc._id || null;
 	},
 
 	'setId': function (id) {
@@ -216,9 +227,12 @@ var Model = Class.create({
 			var keys = key.split('.');
 			var val = this.doc;
 			for (var e = 0; e < keys.length; ++e) {
+				if (val === undefined) {
+					return [];
+				}
 				val = val[keys[e]];
 			}
-			return val;
+			return val || [];
 		}.bind(this);
 		var ids = _getIds(key);
 
@@ -264,7 +278,7 @@ var Model = Class.create({
 				throw err;
 			}
 
-			collection.save(this.doc, function (err) {
+			collection.save(this.doc, { 'options': { 'insert': !this.exists() } }, function (err) {
 				if (err) {
 					throw err;
 				}
