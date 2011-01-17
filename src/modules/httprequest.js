@@ -1,4 +1,5 @@
 var QueryString = require('querystring'),
+	Url = require('url'),
 	Class = require(app.__dirname + 'modules/class.js').Class;
 
 var HttpRequest = exports.HttpRequest = Class.create({
@@ -6,15 +7,16 @@ var HttpRequest = exports.HttpRequest = Class.create({
 		this.request = request;
 		this.host = request.headers.host;
 		this.url = request.url;
+		this.uri = Url.parse(request.url).pathname;
 		this.method = request.method;
 		this.headers = request.headers;
 
 		// cookies
 		this.cookies = {};
 		var cookie_header = request.headers.cookie,
-			fields = (cookie_header !== undefined) ? cookie_header.match(/[^=]+=[^=:;]*/g) : [];
+			fields = (cookie_header !== undefined) ? cookie_header.split(/;\s?/) : [];
 		for (var i = 0, ii = fields.length; i < ii; ++i) {
-			field = fields[i].split('=');
+			field = fields[i].split('=', 2);
 			this.cookies[field[0]] = field[1];
 		}
 
@@ -61,7 +63,7 @@ var HttpRequest = exports.HttpRequest = Class.create({
 		// data (request body)
 		if (request.method == 'POST' || request.method == 'PUT') {
 			request.addListener('data', function (data) {
-				this.data = QueryString.parse(data);
+				this.data = QueryString.parse(data.toString());
 			}.bind(this));
 			request.addListener('end', function () {
 				if (typeof this.callback == 'function') {
@@ -71,7 +73,7 @@ var HttpRequest = exports.HttpRequest = Class.create({
 				this.__defineSetter__('callback', function (callback) {
 					callback();
 				});
-			});
+			}.bind(this));
 		} else {
 			this.data = null;
 		}
