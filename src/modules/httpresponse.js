@@ -35,7 +35,7 @@ var HttpResponse = exports.HttpResponse = Class.create({
 		this.cookies.push({
 			'key': key,
 			'value': value,
-			'expires': RelativeDate.parse(expires, 'toUTCString'),
+			'expires': RelativeDate.parse(expires, 'toUTCString').replace(/, (\d+) (\w+) (\d+) /, ', $1-$2-$3 '),
 			'path': path || '/',
 			'domain': domain,
 			'secure': secure,
