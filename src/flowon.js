@@ -15,6 +15,9 @@ var Router = function () {
 	this._ns = '';
 	this._routes = [];
 	this._staticNS = [];
+
+	this.PARAM_HEX = /^[a-f0-9]+$/i;
+	this.PARAM_INTEGER = /^\d+$/;
 };
 Router.prototype.namespace = function (ns) {
 	if (ns === null) {
@@ -58,7 +61,9 @@ Router.prototype.match = function (uri, qs) {
 		_options = route[2];
 		options = {};
 		for (var o in _options) {
-			options[o] = _options[o];
+			if (_options.hasOwnProperty(o)) {
+				options[o] = _options[o];
+			}
 		}
 
 		var param_keys = [];
@@ -69,7 +74,7 @@ Router.prototype.match = function (uri, qs) {
 			for (p = 0, pp = placeholders.length; p < pp; ++p) {
 				var placeholder = placeholders[p].match(/^:(_?[a-z][\w\-]*)$/);
 				param_keys.push(placeholder[1]);
-				pattern = pattern.replace(':' + placeholder[1], '([^/]+)');
+				pattern = pattern.replace(':' + placeholder[1], ['_c', '_v'].indexOf(placeholder[1]) === -1 ? '([^/]+)' : '([^/\.]+)');
 			}
 		}
 
@@ -86,6 +91,10 @@ Router.prototype.match = function (uri, qs) {
 					continue __route_loop;
 				}
 
+				params[param_keys[p]] = match[p + 1];
+			}
+		} else if (rules === undefined) {
+			for (p = 0, pp = param_keys.length; p < pp; ++p) {
 				params[param_keys[p]] = match[p + 1];
 			}
 		} else {
@@ -132,6 +141,12 @@ Router.prototype.match = function (uri, qs) {
 						params[q] = query[q];
 					}
 				}
+			} else if (rules === undefined) {
+				for (q in query) {
+					if (query.hasOwnProperty(q)) {
+						params[q] = query[q];
+					}
+				}
 			} else {
 				for (q in query) {
 					if (query.hasOwnProperty(q)) {
@@ -156,7 +171,11 @@ Router.prototype.match = function (uri, qs) {
 	return null;
 };
 
-Router.prototype.resolve = function (target) {
+Router.prototype.resolve = function (target, abs) {
+	if (abs && !app._cfg.domain) {
+		throw 'Invalid state: No domain set';
+	}
+
 	var routes = this._routes,
 		route,
 		uri,
@@ -181,7 +200,7 @@ Router.prototype.resolve = function (target) {
 		options = route[2];
 
 		// if the namespace does not match, move to the next route
-		if (route.namespace != target.namespace) {			
+		if (route[0] != target.namespace) {
 			continue;
 		}
 
@@ -233,7 +252,6 @@ Router.prototype.resolve = function (target) {
 				key = param_keys[p];
 				uri = uri.replace(':' + key, params[key]);
 			}
-			return (route[0] || '') + uri + create_qs(params, param_keys);
 		} else if (rules instanceof RegExp) {
 			for (p = 0, pp = param_keys.length; p < pp; ++p) {
 				key = param_keys[p];
@@ -242,7 +260,6 @@ Router.prototype.resolve = function (target) {
 				}
 				uri = uri.replace(':' + key, params[key]);
 			}
-			return (route[0] || '') + uri + create_qs(params, param_keys);
 		} else {
 			for (p = 0, pp = param_keys.length; p < pp; ++p) {
 				key = param_keys[p];
@@ -251,8 +268,8 @@ Router.prototype.resolve = function (target) {
 				}
 				uri = uri.replace(':' + key, params[key]);
 			}
-			return (route[0] || '') + uri + create_qs(params, param_keys);
 		}
+		return (abs ? 'http://' + app._cfg.domain : '') + uri + create_qs(params, param_keys);
 	}
 
 	return null;
@@ -264,14 +281,12 @@ var FlowOn = {
 		'base_uri': '/',
 		'port': 8124,
 		'db_type': null,
-		'max_execution_time': 15
+		'max_execution_time': 15,
+		'session_expiration': '+ 1 day'
 	},
 	'_controllers': {},
 	'__dirname': __dirname + '/',
-	'_router': new Router(),
-
-	'ROUTER_PARAM_HEX': /^[a-f0-9]+$/i,
-	'ROUTER_PARAM_INTEGER': /^\d+$/
+	'_router': new Router()
 };
 FlowOn.set = function (key, value) {
 	this._cfg[key] = value;
@@ -307,14 +322,21 @@ FlowOn.getHeadersByExtension = function (ext) {
 		break;
 	case '.manifest':
 		headers['content-type'] = 'text/cache-manifest; charset=UTF-8';
+		break;
+	default:
+		var date = new Date();
+		date.setFullYear(date.getFullYear() + 1);
+		headers['expires'] = date.toUTCString();
 	}
 
 	return headers;
 };
-FlowOn.getStaticVariables = function (request) {
+FlowOn.getStaticVariables = function (request, response) {
 	return {
 		'base_uri': this._cfg.base_uri,
-		'browser': request.browser
+		'browser': request.browser,
+		'_request': request,
+		'_response': response
 	};
 };
 FlowOn.run = function () {
@@ -368,7 +390,7 @@ FlowOn._handleRequest = function (request, response) {
 	}
 
 	var uri = Url.parse(request.url).pathname;
-	console.log('Requesting ' + uri);
+	console.log(request.method + ' ' + uri);
 
 	request = new HttpRequest(request);
 	response = new HttpResponse(response);
@@ -380,7 +402,7 @@ FlowOn._handleRequest = function (request, response) {
 		controller._request = request;
 		controller._method = request.method;
 		controller._response = response;
-		controller.terminate(404, exc.message);
+		controller.terminate(503, exc);
 		return;
 	}
 	if (route === null) {
@@ -431,7 +453,7 @@ FlowOn._handleRequest = function (request, response) {
 								});
 
 								response.setHeaders(this.getHeadersByExtension('.html'));
-								response.write(ejs.render(this.getStaticVariables(request)));
+								response.write(ejs.render(this.getStaticVariables(request, response)));
 								response.end();
 							}.bind(this));
 						}.bind(this));
@@ -455,7 +477,7 @@ FlowOn._handleRequest = function (request, response) {
 					var ejs = new EJS({
 						'text': file
 					});
-					response.write(ejs.render(this.getStaticVariables(request)), 'UTF-8');
+					response.write(ejs.render(this.getStaticVariables(request, response)), 'UTF-8');
 				} else {
 					response.write(file, 'binary');
 				}
@@ -497,28 +519,9 @@ FlowOn._handleRequest = function (request, response) {
 			controller._name = route.controller;
 			controller._view = route.view;
 
-			try {
-				var startup_mode = controller.startup();
-			} catch (exc) {			
-				var controller = new Controller();
-				controller._request = request;
-				controller._method = request.method;
-				controller._response = response;
-				controller.terminate(503, exc);
-				return;
-			}
-
-			if (controller[route.view] === undefined) {
-				if (startup_mode !== false) {
-					controller.render(200);
-				}
-				return;
-			}
-
-			var date = new Date();
-			var _callView = function (session) {
+			var fn = function (session) {
 				controller._session = session;
-				response.setCookie('FLOWONSESSID', session.getId(), '+ 1 day', undefined, '.' + request.host, false, true);
+				response.setCookie('FLOWONSESSID', session.getId(), this._cfg.session_expiration, undefined, '.' + request.host, false, true);
 
 				var execution_timeout = setTimeout(
 					function () {
@@ -526,6 +529,24 @@ FlowOn._handleRequest = function (request, response) {
 					}.bind(this),
 					this._cfg.max_execution_time * 1000
 				);
+
+				try {
+					var startup_mode = controller.startup(route.params);
+				} catch (exc) {			
+					var c = new Controller();
+					c._request = request;
+					c._method = request.method;
+					c._response = response;
+					c.terminate(503, exc);
+					return;
+				}
+
+				if (controller[route.view] === undefined) {
+					if (startup_mode !== false) {
+						controller.render(200);
+					}
+					return;
+				}
 
 				if (startup_mode === false) {
 					return;
@@ -541,11 +562,11 @@ FlowOn._handleRequest = function (request, response) {
 			}.bind(this);
 
 			if (request.cookies.FLOWONSESSID) {
-				Session.one(request.cookies.FLOWONSESSID, _callView.bind(this));
+				Session.one(request.cookies.FLOWONSESSID, fn.bind(this));
 			} else {
-				var session = new Session();
-				session['date:created'] = Math.floor(date.getTime() / 1000);
-				session.save(_callView.bind(this, session));
+				var session = new Session();				
+				session['date:created'] = Math.floor(new Date().getTime() / 1000);
+				session.save(fn.bind(this, session));
 			}
 		}.bind(this);
 
