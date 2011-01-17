@@ -56,11 +56,26 @@ p.status {
 	color: #555;
 	font-size: 12px;
 }
+pre.stack {
+	border: 1px solid #DDD;
+	color: #AAA;
+}
+pre.stack:first-line {
+	color: #000;
+}
+pre.stack em {
+	color: #555;
+	font-style: normal;
+}
+pre.stack strong {
+	color: #060;
+}
 	</style>
 </head>
 <body>
 <div id="message">
 	<p class="message"><%= message || 'An error occured.' %></p>
+	<%= typeof stack != 'undefined' ? '<pre class="stack">' + stack.toString().replace(/\sat ([^\(]+) \((\S+):(\d+):(\d+)\)/g, "\n   " + '<strong>$1</strong>' + "\n   " + 'in file <em>$2</em> on line <em>$3</em>:<em>$4</em>') + '</pre>' : '' %>
 	<p class="powered-by">Powered by the <a href="http://github.com/flowmedia/flowon">FlowOn Node.js framework</a></p>
 	<p class="status"><%= status %></p>
 </div>
