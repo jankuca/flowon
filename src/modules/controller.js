@@ -27,6 +27,14 @@ exports.Controller = Class.create({
 		}
 	},
 
+	'getSession': function () {
+		if (this._session === undefined) {
+			throw 'Invalid state: Session does not exist.';
+		}
+		
+		return this._session;
+	},
+
 	'terminate': function (status, template_path, message) {
 		if (typeof arguments[0] == 'number') {
 			this._response.status = arguments[0];
