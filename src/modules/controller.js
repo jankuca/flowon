@@ -51,12 +51,20 @@ exports.Controller = Class.create({
 			}
 		}
 
+		if (!message) {
+			this._response.end();
+			return;
+		}
+
 		var template = new Template();
 		template._path = template_path;
 
 		template._response = this._response;
 		template.status = this._response.status;
 		template.message = message;
+		if (message.message !== undefined) {
+			template.stack = message.stack;
+		}
 
 		template.render(function (error, body) {
 			if (error) {
@@ -70,6 +78,8 @@ exports.Controller = Class.create({
 			this._response.write(body);
 			this._response.end();
 		}.bind(this));
+
+		//this.getSession().save();
 	},
 
 	'render': function (status) {
