@@ -265,6 +265,9 @@ var Model = Class.create({
 		}
 		this.save(callback);
 	},
+	'updateTimestamp': function (key) {
+		this[key] = Math.round(new Date().getTime() / 1000);
+	},
 
 	'save': function (callback) {
 		for (var key in this) {
