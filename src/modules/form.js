@@ -17,7 +17,7 @@ var Form = exports.Form = Class.create({
 					if (this[i] !== undefined) {
 						throw 'Forbidden input name: ' + i;
 					}
-					this[i] = data;
+					this[i] = data[i];
 				}
 			}
 		}
