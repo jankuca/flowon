@@ -1,10 +1,13 @@
 var Path = require('path'),
 	Class = require(app.__dirname + 'modules/class.js').Class,
+	Form = require(app.__dirname + 'modules/form.js').Form,
 	Template = require(app.__dirname + 'modules/template.js').Template;
 
 exports.Controller = Class.create({
 	'_rendered': false,
 	'_format': 'html',
+
+	'_forms': {},
 
 	'NO_EXECUTION_LIMIT': 2,
 
@@ -35,6 +38,16 @@ exports.Controller = Class.create({
 		return this._session;
 	},
 
+	'getForm': function (key) {
+		if (this._forms[key] !== undefined) {
+			return this._forms[key];
+		}
+
+		var form = new Form(key, this._request);
+		this._forms[key] = form;
+		return form;
+	},
+
 	'link': function (ncv, params, abs) {
 		if (arguments.length === 0) {
 			return this._request.url;
@@ -45,8 +58,8 @@ exports.Controller = Class.create({
 
 		return app.getRouter().resolve({
 			'namespace': ncv[len - 3] || null,
-			'controller': ncv[len - 2],
-			'view': ncv[len - 1],
+			'controller': ncv[len - 2] || 'default',
+			'view': ncv[len - 1] || 'default',
 			'params': params
 		}, abs);
 	},
