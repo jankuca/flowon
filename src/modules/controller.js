@@ -35,6 +35,28 @@ exports.Controller = Class.create({
 		return this._session;
 	},
 
+	'link': function (ncv, params, abs) {
+		if (arguments.length === 0) {
+			return this._request.url;
+		}
+
+		ncv = ncv.split(':');
+		var len = ncv.length;
+
+		return app.getRouter().resolve({
+			'namespace': ncv[len - 3] || null,
+			'controller': ncv[len - 2],
+			'view': ncv[len - 1],
+			'params': params
+		}, abs);
+	},
+
+	'redirect': function (ncv, params) {
+		this._response.status = 302;
+		this.header('location', this.link(ncv.replace(/:$/, ':default'), params) || this.link());
+		this._response.end();
+	},
+
 	'terminate': function (status, template_path, message) {
 		if (typeof arguments[0] == 'number') {
 			this._response.status = arguments[0];
