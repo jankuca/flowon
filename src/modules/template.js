@@ -5,6 +5,10 @@ var Path = require('path'),
 	EJS = require(app.__dirname + '../lib/ejs/ejs.js').EJS;
 
 var Template = exports.Template = Class.create({
+	'initialize': function (controller) {
+		this._controller = controller;
+	},
+
 	'setLayout': function (name, format) {
 		if (!name) {
 			this._layout_path = undefined;
@@ -31,7 +35,8 @@ var Template = exports.Template = Class.create({
 			Cache.get('ejs_compiled', this._path, function (cache) {
 				if (cache && cache.created > Math.round(new Date(stats.mtime).getTime() / 1000)) {
 					ejs = new EJS({
-						'precompiled': cache.data
+						'precompiled': cache.data,
+						'controller': this._controller
 					});
 					try {
 						html = ejs.render(this);
@@ -66,7 +71,8 @@ var Template = exports.Template = Class.create({
 					}
 
 					ejs = new EJS({
-						'text': file
+						'text': file,
+						'controller': this._controller
 					});
 
 					try {

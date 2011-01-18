@@ -9,7 +9,7 @@ exports.Controller = Class.create({
 	'NO_EXECUTION_LIMIT': 2,
 
 	'initialize': function () {
-		this.template = new Template();
+		this.template = new Template(this);
 		this.template._layout_path = Path.join(app._cfg.app_dir, 'templates', this._namespace, '@layout.' + this._format + '.ejs');
 	},
 	'startup': function () {
@@ -78,7 +78,7 @@ exports.Controller = Class.create({
 			return;
 		}
 
-		var template = new Template();
+		var template = new Template(this);
 		template._path = template_path;
 
 		template._response = this._response;
