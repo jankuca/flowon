@@ -269,7 +269,7 @@ Router.prototype.resolve = function (target, abs) {
 				uri = uri.replace(':' + key, params[key]);
 			}
 		}
-		return (abs ? 'http://' + app._cfg.domain + (app._cfg.port !== 80 ? ':' + app._cfg.port : '') : '') + uri + create_qs(params, param_keys);
+		return (abs ? 'http://' + app._cfg.domain + (app._cfg.port !== 80 && app._cfg.proxy_port !== 80 ? ':' + (app._cfg.proxy_port || app._cfg.port) : '') : '') + uri + create_qs(params, param_keys);
 	}
 
 	return null;
