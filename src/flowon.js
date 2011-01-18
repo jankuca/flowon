@@ -521,7 +521,7 @@ FlowOn._handleRequest = function (request, response) {
 
 			var fn = function (session) {
 				controller._session = session;
-				response.setCookie('FLOWONSESSID', session.getId(), this._cfg.session_expiration, undefined, '.' + request.host, false, true);
+				response.setCookie('FLOWONSESSID', session.getId(), this._cfg.session_expiration, undefined, '.' + request.host.replace(/:[\d]+$/, ''), false, true);
 
 				var execution_timeout = setTimeout(
 					function () {
