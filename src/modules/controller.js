@@ -7,13 +7,13 @@ exports.Controller = Class.create({
 	'_rendered': false,
 	'_format': 'html',
 
-	'_forms': {},
-
 	'NO_EXECUTION_LIMIT': 2,
 
 	'initialize': function () {
 		this.template = new Template(this);
 		this.template._layout_path = Path.join(app._cfg.app_dir, 'templates', this._namespace, '@layout.' + this._format + '.ejs');
+
+		this._forms = {};
 	},
 	'startup': function () {
 		this.template._namespace = this._namespace;
