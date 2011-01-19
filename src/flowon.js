@@ -530,6 +530,21 @@ FlowOn._handleRequest = function (request, response) {
 					this._cfg.max_execution_time * 1000
 				);
 
+				var _callView = function () {
+					if (controller[route.view] !== undefined) {
+						var mode = controller[route.view](route.params);
+						if (mode !== undefined) {
+							switch (mode) {
+							case controller.NO_EXECUTION_LIMIT:
+								clearTimeout(execution_timeout);
+							}
+						}
+					} else {
+						controller.render(200);
+					}
+				};
+				controller._callView = _callView;
+
 				try {
 					var startup_mode = controller.startup(route.params);
 				} catch (exc) {			
@@ -552,13 +567,7 @@ FlowOn._handleRequest = function (request, response) {
 					return;
 				}
 
-				var mode = controller[route.view](route.params);
-				if (mode !== undefined) {
-					switch (mode) {
-					case controller.NO_EXECUTION_LIMIT:
-						clearTimeout(execution_timeout);
-					}
-				}
+				_callView();
 			}.bind(this);
 
 			if (request.cookies.FLOWONSESSID) {
