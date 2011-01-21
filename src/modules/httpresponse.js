@@ -99,5 +99,9 @@ var HttpResponse = exports.HttpResponse = Class.create({
 		}
 
 		this.response.end();
+	},
+
+	'getRawResponse': function () {
+		return this.response;
 	}
 });

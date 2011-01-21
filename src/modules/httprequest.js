@@ -77,5 +77,9 @@ var HttpRequest = exports.HttpRequest = Class.create({
 		} else {
 			this.data = null;
 		}
+	},
+
+	'getRawRequest': function () {
+		return this.request;
 	}
 });
