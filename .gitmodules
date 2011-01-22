@@ -7,3 +7,6 @@
 [submodule "lib/relativedate"]
 	path = lib/relativedate
 	url = git://gist.github.com/788114.git
+[submodule "lib/node-formidable"]
+	path = lib/node-formidable
+	url = git://github.com/felixge/node-formidable.git

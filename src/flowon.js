@@ -11,6 +11,35 @@ var Session,
 	HttpRequest,
 	HttpResponse;
 
+var Emitter = Class.create({
+	'on': function (type, listener) {
+		if (this._listeners === undefined) {
+			this._listeners = {};
+		}
+		if (this._listeners[type] === undefined) {
+			this._listeners[type] = [];
+		}
+		this._listeners[type].push(listener);
+	},
+	'emit': function (type) {
+		var args = Array.prototype.slice.call(arguments, 1);
+		if (this._listeners === undefined) {
+			return;
+		}
+		var listeners = this._listeners[type];
+		if (listeners === undefined) {
+			return;
+		}
+		var i, ii, result;
+		for (i = 0, ii = listeners.length; i < ii; ++i) {
+			result = listeners[i].apply(this, args);
+			if (result === false) {
+				return;
+			}
+		}
+	}
+});
+
 var Router = function () {
 	this._ns = '';
 	this._routes = [];
@@ -406,7 +435,7 @@ FlowOn._handleRequest = function (request, response) {
 		return;
 	}
 	if (route === null) {
-		console.log('No route for ' + uri + '. Trying to access a static file.');
+		console.log('    ' + uri + ' --> static');
 
 		var path = Path.join(this._cfg.public_dir, uri);
 		Path.exists(path, function (exists) {
@@ -580,11 +609,10 @@ FlowOn._handleRequest = function (request, response) {
 		}.bind(this);
 
 		request.callback = _startController;
-		if (request.data === null) {
-			_startController();
-		}
 	}.bind(this));
 };
+
+FlowOn.Emitter = Emitter;
 
 exports.FlowOn = FlowOn;
 global.app = FlowOn;

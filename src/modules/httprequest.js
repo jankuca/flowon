@@ -2,6 +2,8 @@ var QueryString = require('querystring'),
 	Url = require('url'),
 	Class = require(app.__dirname + 'modules/class.js').Class;
 
+var Formidable = require(app.__dirname + '../lib/node-formidable/lib/formidable/index');
+
 var HttpRequest = exports.HttpRequest = Class.create({
 	'initialize': function (request) {
 		this.request = request;
@@ -62,20 +64,28 @@ var HttpRequest = exports.HttpRequest = Class.create({
 
 		// data (request body)
 		if (request.method == 'POST' || request.method == 'PUT') {
-			request.addListener('data', function (data) {
-				this.data = QueryString.parse(data.toString());
-			}.bind(this));
-			request.addListener('end', function () {
+			var form = new Formidable.IncomingForm();
+			form.parse(request, function (err, fields, files) {
+				this.data = fields;
+				this.files = files;
+
 				if (typeof this.callback == 'function') {
 					this.callback();
 				}
-
 				this.__defineSetter__('callback', function (callback) {
 					callback();
 				});
 			}.bind(this));
 		} else {
 			this.data = null;
+			this.files = {};
+			
+			if (typeof this.callback == 'function') {
+				this.callback();
+			}
+			this.__defineSetter__('callback', function (callback) {
+				callback();
+			});
 		}
 	},
 
