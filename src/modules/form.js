@@ -6,6 +6,7 @@ var Form = exports.Form = Class.create(app.Emitter, {
 		this._request = request;
 		this._errors = {};
 		this._files = null;
+		this._submitted = false;
 
 		this.action = request.uri;
 		this.method = 'post';
@@ -21,7 +22,7 @@ var Form = exports.Form = Class.create(app.Emitter, {
 			}
 		}
 		if (request.files !== null) {
-			this._submitted = false;
+			this._submitted = true;
 			this._files = request.files;
 		}
 	},
