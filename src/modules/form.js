@@ -21,7 +21,7 @@ var Form = exports.Form = Class.create(app.Emitter, {
 			}
 		}
 		if (request.files !== null) {
-			this._submitted = true;
+			this._submitted = false;
 			this._files = request.files;
 		}
 	},
