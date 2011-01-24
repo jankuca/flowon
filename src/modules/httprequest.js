@@ -13,6 +13,8 @@ var HttpRequest = exports.HttpRequest = Class.create({
 		this.method = request.method;
 		this.headers = request.headers;
 
+		this._ajax = (request.headers['x-requested-with'] && request.headers['x-requested-with'] === 'XMLHttpRequest');
+
 		// cookies
 		this.cookies = {};
 		var cookie_header = request.headers.cookie,
@@ -91,5 +93,9 @@ var HttpRequest = exports.HttpRequest = Class.create({
 
 	'getRawRequest': function () {
 		return this.request;
+	},
+
+	'isAjax': function () {
+		return !!this._ajax;
 	}
 });

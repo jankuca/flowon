@@ -30,6 +30,10 @@ exports.Controller = Class.create({
 		}
 	},
 
+	'isAjax': function () {
+		return this._request.isAjax();
+	},
+
 	'getSession': function () {
 		if (this._session === undefined) {
 			throw 'Invalid state: Session does not exist.';
