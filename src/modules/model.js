@@ -53,12 +53,12 @@ var Model = Class.create({
 		}
 
 		if (obj_many) {
-			if (eval('(this.doc.' + key + ' === undefined)')) {
-				eval('(this.doc.' + key + ' = [];)');
+			if (eval('this.doc.' + key + ' === undefined')) {
+				eval('this.doc.' + key + ' = [];');
 			}
-			eval('(this.doc.' + key + '.push(obj.doc));)');
+			eval('this.doc.' + key + '.push(obj.doc)');
 		} else {
-			eval('(this.doc.' + key + ' = obj.doc;)');
+			eval('this.doc.' + key + ' = obj.doc;');
 		}
 
 		return this;
@@ -247,7 +247,13 @@ var Model = Class.create({
 			if (ids === undefined) {
 				res = (obj_many) ? [] : null;
 			} else {
-				res = ids;
+				res = [];
+				for (var r = 0, rr = ids.length; r < rr; ++r) {
+					res.push(new embeddable[0](ids[r]));
+				}
+				if (!obj_many) {
+					res = res[0] || null;
+				}
 			}
 
 			if (typeof callback == 'function') {
@@ -276,21 +282,27 @@ var Model = Class.create({
 			}
 		}
 
-		app.db.collection(this.collection_name, function (err, collection) {
-			if (err) {
-				throw err;
-			}
-
-			collection.save(this.doc, { 'options': { 'insert': !this.exists() } }, function (err) {
+		if (!this.constructor.is_embedded) {
+			app.db.collection(this.collection_name, function (err, collection) {
 				if (err) {
 					throw err;
 				}
 
-				if (typeof callback == 'function') {
-					callback();
-				}
-			});
-		}.bind(this));
+				collection.save(this.doc, { 'options': { 'insert': !this.exists() } }, function (err) {
+					if (err) {
+						throw err;
+					}
+
+					if (typeof callback === 'function') {
+						callback();
+					}
+				});
+			}.bind(this));
+		} else {
+			if (typeof callback === 'function') {
+				callback();
+			}
+		}
 	},
 
 	'remove': function (callback) {
@@ -419,6 +431,7 @@ var Factory = exports.Factory = {
 		spec.balongs_to = [];
 
 		var model = Class.create(Model, spec);
+		model.NAME = model_name;
 		model.embeds_one = spec.embeds_one;
 		model.embeds_many = spec.embeds_many;		
 		model.has_one = spec.has_one;
