@@ -599,12 +599,22 @@ FlowOn._handleRequest = function (request, response) {
 				_callView();
 			}.bind(this);
 
-			if (request.cookies.FLOWONSESSID) {
-				Session.one(request.cookies.FLOWONSESSID, fn.bind(this));
-			} else {
-				var session = new Session();				
+			var createSession = function () {
+				var session = new Session();
 				session['date:created'] = Math.floor(new Date().getTime() / 1000);
 				session.save(fn.bind(this, session));
+			}.bind(this);
+
+			if (request.cookies.FLOWONSESSID) {
+				Session.one(request.cookies.FLOWONSESSID, function (session) {
+					if (!session.exists()) {
+						createSession();
+					} else {
+						fn.call(this, session);
+					}
+				});
+			} else {
+				createSession();
 			}
 		}.bind(this);
 
