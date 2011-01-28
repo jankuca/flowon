@@ -627,6 +627,8 @@ FlowOn.Emitter = Emitter;
 exports.FlowOn = FlowOn;
 global.app = FlowOn;
 
+global.Class = Class;
+
 Session = require('./modules/models/session.js').Model;
 HttpRequest = require('./modules/httprequest.js').HttpRequest;
 HttpResponse = require('./modules/httpresponse.js').HttpResponse;
