@@ -1,100 +1,87 @@
+/*global app*/
+
 var Path = require('path'),
 	FileSystem = require('fs'),
-	Class = require(app.__dirname + 'modules/class.js').Class,
-	Cache = require(app.__dirname + 'modules/cache.js').Cache,
-	EJS = require(app.__dirname + '../lib/ejs/ejs.js').EJS;
+	EJS = require('ejs/ejs.js').EJS;
 
-var Template = exports.Template = Class.create({
-	'initialize': function (controller) {
-		this._controller = controller;
-	},
-
+global.Template = Function.inherit(function (controller) {
+	this._controller = controller;
+}, {
 	'setLayout': function (name, format) {
-		if (!name) {
-			this._layout_path = undefined;
-		} else {
-			this._layout_path = Path.join(app._cfg.app_dir, 'templates', this._namespace, '@' + name + '.' + (format || 'html') + '.ejs');
-		}
+		this._layout_path = name ? Path.join(app._cfg.app_dir, 'templates', this._namespace, '@' + name + '.' + (format || 'html') + '.ejs') : undefined;
 	},
 
 	'render': function (callback) {
 		if (!this._path) {
-			callback('No template file path specified');
-			return;
+			return callback('No template file path specified');
 		}
 
-		var html, ejs;
+		var template = this;
 
-		FileSystem.stat(this._path, function (error, stats) {
+		FileSystem.stat(template._path, function (error, stats) {
 			if (error || !stats.isFile()) {
-				callback('Missing template: ' + this._path);
-				return;
+				return callback('Missing template: ' + template._path);
 			}
 				
 			// Check the cache
-			Cache.get('ejs_compiled', this._path, function (cache) {
+			Cache.get('ejs_compiled', template._path, function (cache) {
 				if (cache && cache.created > Math.round(new Date(stats.mtime).getTime() / 1000)) {
-					ejs = new EJS({
+					var ejs = new EJS({
 						'precompiled': cache.data,
-						'controller': this._controller
+						'controller': template._controller
 					});
+					var html;
 					try {
-						html = ejs.render(this);
+						html = ejs.render(template);
 					} catch (exc) {
-						callback('Template error: ' + exc.message);
-						return;
+						return callback('Template error: ' + exc.message);
 					}
 
-					if (!this._layout_path) {
-						callback(null, html);
-						return;
+					if (!template._layout_path) {
+						return callback(null, html);
 					}
 
-					this.$content = html;
-					this._path = this._layout_path;
-					this._layout_path = undefined;
-					this.render(callback);
+					template.$content = html;
+					template._path = template._layout_path;
+					template._layout_path = undefined;
+					template.render(callback);
 					return;
 				}
 
-				FileSystem.readFile(this._path, 'UTF-8', function (error, file) {
+				FileSystem.readFile(template._path, 'UTF-8', function (error, file) {
 					if (error) {
 						switch (error.errno) {
 						case 21: // EISDIR
-							callback('Missing template: ' + this._path);
-							break;
+							return callback('Missing template: ' + template._path);
 						default:
-							callback('Invalid template: ' + this._path);
-							break;
+							return callback('Invalid template: ' + template._path);
 						}
-						return;
 					}
 
-					ejs = new EJS({
+					var ejs = new EJS({
 						'text': file,
-						'controller': this._controller
+						'controller': template._controller
 					});
-
+					var html;
 					try {
-						html = ejs.render(this);
-
-						Cache.set('ejs_compiled', this._path, ejs.out());
+						html = ejs.render(template);
+						Cache.set('ejs_compiled', template._path, ejs.out());
 					} catch (exc) {
 						callback('Template error: ' + exc.message);
 						return;
 					}
 
-					if (!this._layout_path) {
+					if (!template._layout_path) {
 						callback(null, html);
 					} else {
-						this.$content = html;
-						this._path = this._layout_path;
-						this._layout_path = undefined;
-						this.render(callback);
+						template.$content = html;
+						template._path = template._layout_path;
+						template._layout_path = undefined;
+						template.render(callback);
 					}
-				}.bind(this));
-			}.bind(this));
-		}.bind(this));
+				});
+			});
+		});
 	}
 });
 
@@ -105,14 +92,13 @@ Template.loadHelpers = function (dirname, callback) {
 		if (error) {
 			console.error('Could not load template helpers from ' + dirname);
 		} else {
-			for (var i = 0, ii = files.length; i < ii; ++i) {
-				var file = files[i];
+			files.forEach(function (file) {
 				Template.Helpers[file.split('.')[0]] = require(Path.join(dirname, file)).helper;
-			}
+			});
 			console.log('Loaded template helpers from ' + dirname);
 		}
 
-		if (typeof callback == 'function') {
+		if (typeof callback === 'function') {
 			callback();
 		}
 	});

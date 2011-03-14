@@ -11,29 +11,32 @@ FlowOn is a very simple but powerful MVC framework for building RIAs.
 	// The framework object is loaded into the global object -> accessible as "app" at all time
 
 	// Set up the environment
+	app.set('port', 1100);
+	app.set('domain', 'example.com');
 	app.set('app_dir', __dirname + '/app/');
 	app.set('lib_dir', __dirname + '/lib/');
 	app.set('public_dir', __dirname + '/public/');
 
+	app.set('session_expiration', '+ 1 year');
+
 	// (optional) Reference a database driver
 	// Currently only MongoDB is supported via the node-mongodb-native package
-	var mongodb = require('./lib/node-mongodb-native/lib/mongodb/');
 	app.set('db_type', 'mongodb');
 	app.set('db_name', 'test');
 	app.set('db_server', '127.0.0.1');
 	app.set('db_port', 27017);
-	app.setDbDriver(mongodb);
+	app.setDbDriver(require('./lib/node-mongodb-native/lib/mongodb/'));
 
 	// Set up routes
 	// The namespace is initially empty (i.e. the domain root)
-	var router = app.getRouter();
+	var router = app.router;
 	// domain index
 	router.push('/', {
 		'controller': 'index', // app_dir/controllers/index.js
 		'view': 'index'
 	});
 	// namespace: /api/
-	router.namespace('api');
+	router.namespace = 'api';
 	router.push('/user/:id', {
 		'controller': 'user', // app_dir/controllers/api/user.js
 		'view': 'show',
@@ -47,7 +50,7 @@ FlowOn is a very simple but powerful MVC framework for building RIAs.
 		'params': app.ROUTER_PARAM_INTEGER // sugar, batch setting
 	});
 
-	router.namespace(null);
+	router.namespace = null;
 	// You can also set wildcard routes
 	router.push('/:_c/:_v', {
 		'controller': ':_c', // reference the parameter :_c
@@ -72,12 +75,10 @@ Controller files are stored in the `app_dir/controllers/` directory. Router name
 	// app_dir/controllers/api/user.js:
 
 	// Require needed modules
-	var Class = require(app.__dirname + 'modules/class.js').Class,
-		_Controller = require(app.__dirname + 'modules/controller.js').Controller,
-		User = require(app._cfg.app_dir + 'models/user.js').Model;
+	require(app._cfg.app_dir + 'models/user.js');
 
 	// Create the controller class; the inheritance engine is borrowed from the Prototype.js library
-	var Controller = exports.Controller = Class.create(_Controller, {
+	var Controller = exports.Controller = global.Controller.inherit({
 		// Define the 'show' view
 		'show': function (params) {
 			User.one(params.id, function (user) {
@@ -102,14 +103,12 @@ Controller files are stored in the `app_dir/controllers/` directory. Router name
 					this.render(200);
 				}.bind(this));
 			}.bind(this));
-		}
+		},
 	});
 
 > Note that you have to explicitly tell the controller to render the view by calling the `Controller#render` method. There is a maximum execution limit after which the framework renders an error and closes the connection. To prevent this behavior for a single view, the view has to return `Controller#NO_EXECUTION_LIMIT`.
 
 ## Models
-
-There is a factory object for defining models.
 
 Model files are stored in the `app_dir/models/` directory. Router namespaces are not applied to this directory.
 
@@ -120,26 +119,24 @@ Model files are stored in the `app_dir/models/` directory. Router namespaces are
 	// Require the factory object
 	var Factory = require(app.__dirname + 'modules/model.js').Factory;
 	
-	var Model = exports.Model = Factory.create('users', {
-		'has_many': [Model, 'friends'],
-
+	var User = global.User = Model.inherit('user', {
 		'getFriends': function (fields, callback) {
-			if (!this.exists()) {
+			if (!this.stored) {
 				callback(false);
 				return;
 			}
 
-			this.get('friends', {}, { 'fields': fields, 'sort': 'users:username' }, callback);
-		}
+			User.all({}, { 'fields': fields, 'sort': 'users:username' }, callback);
+		},
 	});
+
+> We are working with anonymous functions. Therefore, we need to tell the Model.inherit method what do we want to define ('user').
 
 Every model constructor has two static methods for fetching content from the database -- `Model.one` and `Model.all`.
 
-> The variable `Model` represents any constructor created by the `Factory`. For example the `User` model:
-
 	// get a user by their username
 	User.one({ 'users:username': '...' }, function (user) {
-		if (!user.exists()) {
+		if (!user.stored) {
 			// ... error probably
 		} else {
 			// ...
@@ -158,60 +155,49 @@ Every model constructor has two static methods for fetching content from the dat
 
 ### Associations
 
-Associations between models are defined by `has_one`, `has_many`, `embeds_one` and `embeds_many` properties.
+Associations between models are defined through the `has_one`, `has_many`, `belongs_to`, `embeds_one`, `embeds_many` and `embedded_in` methods.
 
 	// book.js:
-	var Book = Factory.create({
-		'has_many': [Chapter, 'chapters']
-	});
+	var Book = Model.inherit('book');
+	Book.has_many('chapters');
 
 	// chapter.js:
-	var Chapter = Factory.create({
-		'embeds_many': [Paragraph, 'paragraphs']
-	});
+	var Chapter = Model.inherit('chapter');
+	Chapter.belongs_to('book');
+	Chapter.embeds_many('paragraphs');
 
 	// paragraph.js:
-	var Paragraph = Factory.create({
+	var Paragraph = Model.inherit('paragraph');
+	Paragraph.embedded_in('chapter');
 
+Each of the methods defines a getter method for the given model. From the above example, each `Book` instance gets a `getChapters` method, each `Chapter` instance gets a `getParagraphs` method and a `getParent` method and each `Paragraph` instance also gets a `getParent` method.
+
+	book.getChapters(function (chapters) {
+		// ...
 	});
-
-From the above example, each book document stores IDs of its sub (chapter) documents in its 'chapters' property and each chapter document stores ots sub (paragraph) documents in its 'paragraphs' property.
-
-	book = {
-		'_id': ObjectId(...),
-		'chapters': [
-			ObjectId(...),
-			ObjectId(...)
-		]
-	}
-
-	chapter = {
-		'_id': ObjectId(...),
-		'paragraphs': [
-			{ ... },
-			{ ... }
-		]
-	}
+	chapter.getParent(function (book) {
+		// ...
+	});
 
 #### Association API
 
-Each model instance (db document representation) with either of the properties mentioned above can be given sub documents via `model#give` and `model#embed`. According to the previous model definitions, this code creates a chapter with one paragraph and stores it in the `book` document.
+To associate `Model` instances, pass one to another's `ref` or `embed` method. `ref` creates a **reference association** (defined via the `has_one` and `has_many` methods) and `embed` **embeds** the whole model in the first one.
 
 	var chapter = new Chapter();
 	chapter[':title'] = 'Lorem ipsum';
 
 	var p = new Paragraph();
 	p[':content'] = '...';
-	chapter.embed(p, 'paragraphs');
+	chapter.embed(p);
 
 	chapter.save(function () {
-		book.give(chapter, 'chapters');
+		book.ref(chapter);
 		book.save();
 	});
 
 > Note/todo: There is currently no API method for removing associatied documents. However, the `model#remove` method will eventually be able to clean association to its parent document.
 
-The `model#remove` method removes an object from its collection but does not remove associations from parent documents.
+The `model#remove` method removes an object from its collection but does not remove associations from parent documents. This is an open issue and it is in development.
 
 ## Views / templates
 
@@ -231,9 +217,9 @@ Template files are stored in the `app_dir/templates/` directory. Router namespac
 	<h1>Friends of <%= user['users:realanme'] %></h1>
 
 	<ul>
-	<% for (var i = 0, ii = friends.length; i < ii; ++i) { %>
-		<li><%= friends[i]['users:realname'] %></li>
-	<% } %>
+	<% friends.forEach(function (friend) { %>
+		<li><%= friend['users:realname'] %></li>
+	<% }) %>
 	</ul>
 
 All templates are cached so that EmbeddedJS does not have to compile the markup for every request. The Template class checks for changes and discards the cached version in case the original template file changed.
@@ -298,9 +284,9 @@ As you can see from the examples, the pattern for the first argument is: `[names
 
 ## Caching
 
-The framework provides a very simple way to cache data. The Cache class can also interact with the widely used Memcached service.
+The framework provides a very simple way to cache data. The Cache class will also be able to interact with the widely used Memcached service in the future.
 
-If Memcached is not available, the system uses file-based cache located in the `app_dir/cache` directory.
+Currently (and when Memcached is not available), the system uses file-based cache located in the `app_dir/cache` directory.
 
 	Cache.set('namespace', 'key', 'data', '+ 10 minutes', function () {
 		// It looks like everything is OK even if the caching process failed.

@@ -1,32 +1,31 @@
+/*global app*/
+/*global APP_DIR*/
+
 var Path = require('path'),
 	FileSystem = require('fs'),
-	Base64 = require(app.__dirname + '../lib/base64/base64.js').Base64,
-	RelativeDate = require(app.__dirname + '../lib/relativedate/relativedate.js'),
-	Class = require(app.__dirname + 'modules/class.js').Class;
+	Base64 = require('base64/base64.js').Base64,
+	RelativeDate = require('relativedate/relativedate.js');
 
-var Cache = exports.Cache = Class.create({
-	'initialize': function (namespace, key) {
-		this.namespace = namespace;
-		this.key = key;
-	}
+var Cache = global.Cache = Function.inherit(function (namespace, key) {
+	this.namespace = namespace;
+	this.key = key;
 });
 
 Cache.get = function (namespace, key, callback) {
-	// We do not need to bother with getting the data if there is no callback specified
-	if (typeof callback != 'function') {
+	// We do not need to bother with getting the data if there is no callback to collect it
+	if (typeof callback !== 'function') {
 		return;
 	}
 
 	key = Base64.encode(key);
-	var memcached = app.getMemcached();
+	var memcached = app.memcached;
 	// Check if we are using memcached; if not, fall back to file cache
 	if (memcached) {
 		memcached.on('connect', function () {
 			memcached.get(namespace + ':' + key, function (data, error) {
 				var errors = ['ERROR', 'NOT_FOUND', 'CLIENT_ERROR', 'SERVER_ERROR'];
-				if (data.length <= 12 && errors.indexOf(data) > -1) {
-					callback(null);
-					return;
+				if (data.length <= 12 && errors.indexOf(data) !== -1) {
+					return callback(null);
 				}
 
 				data = JSON.parse(data);
@@ -45,7 +44,6 @@ Cache.get = function (namespace, key, callback) {
 				cache.data = data.data;
 				cache.created = data.created;
 				cache.expires = data.expires;
-
 				callback(cache);
 
 				memcached.close();
@@ -57,7 +55,7 @@ Cache.get = function (namespace, key, callback) {
 		});
 		memcached.connect();
 	} else {
-		var path = Path.join(app._cfg.app_dir, 'cache', namespace + '__' + key);
+		var path = Path.join(APP_DIR, 'cache', namespace + '__' + key);
 		FileSystem.stat(path, function (error, stats) {
 			if (error || !stats.isFile()) {
 				callback(null);
@@ -92,28 +90,27 @@ Cache.get = function (namespace, key, callback) {
 };
 
 Cache.set = function (namespace, key, data, expires, callback) {
-	if (typeof expires == 'function') {
-		callback = expires;
+	if (arguments.length === 4 && typeof arguments[3] === 'function') {
+		callback = arguments[3];
 		expires = undefined;
 	}
-
-	key = Base64.encode(key);
 
 	var add = 0,
 		now = Math.round(new Date().getTime() / 1000);
 
+	key = Base64.encode(key);
+
 	// expiration
 	if (expires === undefined) {
 		expires = 0;
-	} else if (typeof expires == 'string') {
-		if (expires[0] != '+') {
+	} else if (typeof expires === 'string') {
+		if (expires[0] !== '+') {
 			expires = 0;
 		} else {
 			add = RelativeDate.parse(expires);
 			expires += add;
 		}
 	}
-
 	if (expires !== 0 && !add) {
 		add = expires - now;
 	}
@@ -125,21 +122,21 @@ Cache.set = function (namespace, key, data, expires, callback) {
 	};
 	data = JSON.stringify(data);
 
-	var memcached = app.getMemcached();
+	var memcached = app.memcached;
 	if (memcached) {
 		memcached.on('connect', function () {
 			memcached.set(namespace + ':' + key, data, callback, add);
-		}.bind(this));
+		});
 		memcached.once('error', function () {
 			console.log('error connecting to memcached');
-			if (typeof callback == 'function') {
+			if (typeof callback === 'function') {
 				callback();
 			}
-		}.bind(this));
+		});
 	} else {
-		var path = Path.join(app._cfg.app_dir, 'cache', namespace + '__' + key);
+		var path = Path.join(APP_DIR, 'cache', namespace + '__' + key);
 		FileSystem.writeFile(path, data, function (error) {
-			if (typeof callback == 'function') {
+			if (typeof callback === 'function') {
 				callback();
 			}
 			if (error) {
@@ -151,21 +148,21 @@ Cache.set = function (namespace, key, data, expires, callback) {
 
 Cache.remove = function (namespace, key, callback) {
 	key = Base64.encode(key);
-	var memcached = app.getMemcached();
 	// Check if we are using memcached; if not, fall back to file cache
+	var memcached = app.getMemcached();
 	if (memcached) {
 		memcached.on('connect', function () {
 			memcached['delete'](namespace + ':' + key, callback);
 		});
 		memcached.once('error', function (error) {
 			console.log('error connecting to memcached');
-			if (typeof callback == 'function') {
+			if (typeof callback === 'function') {
 				callback();
 			}
 		});
 		memcached.connect();
 	} else {
-		var path = Path.join(app._cfg.app_dir, 'cache', namespace + '__' + key);
+		var path = Path.join(APP_DIR, 'cache', namespace + '__' + key);
 		Path.exists(path, function (exists) {
 			if (!exists) {
 				callback();

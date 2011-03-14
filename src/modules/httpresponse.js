@@ -1,16 +1,15 @@
-var Class = require(app.__dirname + 'modules/class.js').Class,
-	RelativeDate = require(app.__dirname + '../lib/relativedate/relativedate.js');
+/*global app*/
 
-var HttpResponse = exports.HttpResponse = Class.create({
-	'initialize': function (response) {
-		this._head_sent = false;
+var RelativeDate = require('relativedate/relativedate.js');
 
-		this.response = response;
-		this.status = 200;
-		this.headers = {};
-		this.cookies = [];
-	},
+global.HttpResponse = Function.inherit(function (response) {
+	this._head_sent = false;
 
+	this.response = response;
+	this.status = 200;
+	this.headers = {};
+	this.cookies = [];
+}, {
 	'isHeadSent': function () {
 		return this._head_sent;
 	},
@@ -20,15 +19,13 @@ var HttpResponse = exports.HttpResponse = Class.create({
 	},
 
 	'setHeader': function (key, value) {
-		this.headers[key.toLowerCase()] = value;
+		this.headers[key.toLowerCase()] = value.toString();
 	},
 
 	'setHeaders': function (headers) {
-		for (var i in headers) {
-			if (headers.hasOwnProperty(i)) {
-				this.headers[i] = headers[i];
-			}
-		}
+		Object.getOwnPropertyNames(headers).forEach(function (key) {
+			this.headers[key.toLowerCase()] = headers[key].toString();
+		}, this);
 	},
 
 	'setCookie': function (key, value, expires, path, domain, secure, httponly) {
@@ -45,43 +42,31 @@ var HttpResponse = exports.HttpResponse = Class.create({
 
 	'writeHead': function () {
 		var headers = [];
-		var i, ii, header;
-		ii = this.headers;
-		for (var i in ii) {
-			if (ii.hasOwnProperty(i)) {
-				header = ii[i];
-				headers.push([i.toLowerCase(), header]);
-			}
-		}
+		Object.getOwnPropertyNames(this.headers).forEach(function (key) {
+			headers.push([key.toLowerCase(), this.headers[key]]);
+		}, this);
 
-		if (this.cookies.length > 0) {
-			var cookies = this.cookies,
-				cookie;
-			for (var i = 0, ii = cookies.length; i < ii; ++i) {
-				header = cookies[i];
-				cookie = [];
-				cookie.push(header.key + '=' + header.value);
-				if (header.expires) {
-					cookie.push('expires=' + header.expires);
-				}
-				if (header.path) {
-					cookie.push('path=' + header.path);
-				}
-				if (header.domain) {
-					cookie.push('domain=' + header.domain);
-				}
-				if (header.secure) {
-					cookie.push('secure');
-				}
-				if (header.httponly) {
-					cookie.push('httponly');
-				}
-				headers.push(['set-cookie', cookie.join('; ')]);
+		this.cookies.forEach(function (obj) {
+			var cookie = [obj.key + '=' + obj.value];
+			if (obj.expires) {
+				cookie.push('expires=' + obj.expires);
 			}
-		}
+			if (obj.path) {
+				cookie.push('path=' + obj.path);
+			}
+			if (obj.domain) {
+				cookie.push('domain=' + obj.domain);
+			}
+			if (obj.secure) {
+				cookie.push('secure');
+			}
+			if (obj.httponly) {
+				cookie.push('httponly');
+			}
+			headers.push(['set-cookie', cookie.join('; ')]);
+		});
 
 		this.response.writeHead(this.status, headers);
-
 		this._head_sent = true;
 	},
 
@@ -100,8 +85,4 @@ var HttpResponse = exports.HttpResponse = Class.create({
 
 		this.response.end();
 	},
-
-	'getRawResponse': function () {
-		return this.response;
-	}
 });

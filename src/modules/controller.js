@@ -1,20 +1,33 @@
+/*global app*/
+/*global APP_DIR, SOURCE_DIR*/
+
 var Path = require('path'),
-	Class = require(app.__dirname + 'modules/class.js').Class,
-	Form = require(app.__dirname + 'modules/form.js').Form,
-	Template = require(app.__dirname + 'modules/template.js').Template;
+	Form = require(SOURCE_DIR + 'modules/form.js').Form;
 
-exports.Controller = Class.create({
-	'_rendered': false,
-	'_format': 'html',
+global.Controller = Function.inherit(function (request, response, route) {
+	this._request = request;
+	this._method = request.method;
+	this._data = request.data;
+	this._response = response;
 
-	'NO_EXECUTION_LIMIT': 2,
+	if (route) {
+		this._namespace = route.namespace;
+		this._name = route.controller;
+		this._view = route.view;
+	}
 
-	'initialize': function () {
-		this.template = new Template(this);
-		this.template._layout_path = Path.join(app._cfg.app_dir, 'templates', this._namespace, '@layout.' + this._format + '.ejs');
+	this._rendered = false;
+	this._format = 'html';
+	this._forms = {};
+	this._session = null;
 
-		this._forms = {};
-	},
+	this.template = new Template(this);
+	this.template._layout_path = Path.join(APP_DIR, 'templates', this._namespace, '@layout.' + this._format + '.ejs');
+
+	Object.defineProperties(this, {
+		'NO_EXECUTION_LIMIT': { 'value': 2 },
+	});
+}, {
 	'startup': function () {
 		this.template._namespace = this._namespace;
 		// general variables
@@ -41,6 +54,9 @@ exports.Controller = Class.create({
 		
 		return this._session;
 	},
+	'setSession': function (session) {
+		this._session = session;
+	},
 
 	'getForm': function (key) {
 		if (this._forms[key] !== undefined) {
@@ -60,7 +76,7 @@ exports.Controller = Class.create({
 		ncv = ncv.split(':');
 		var len = ncv.length;
 
-		return app.getRouter().resolve({
+		return app.router.resolve({
 			'namespace': ncv[len - 3] || null,
 			'controller': ncv[len - 2] || 'default',
 			'view': ncv[len - 1] || 'default',
@@ -75,16 +91,16 @@ exports.Controller = Class.create({
 	},
 
 	'terminate': function (status, template_path, message) {
-		if (typeof arguments[0] == 'number') {
+		if (typeof arguments[0] === 'number') {
 			this._response.status = arguments[0];
 		} else if (arguments.length === 1) {
 			message = arguments[0];
 		}
 
-		if (arguments.length == 2) {
+		if (arguments.length === 2) {
 			message = arguments[1];
-			if (typeof arguments[0] == 'number') {
-				template_path = app.__dirname + 'templates/error.' + this._format + '.ejs';
+			if (typeof arguments[0] === 'number') {
+				template_path = SOURCE_DIR + 'templates/error.' + this._format + '.ejs';
 			} else {
 				template_path = arguments[0];
 			}
@@ -122,7 +138,7 @@ exports.Controller = Class.create({
 	},
 
 	'render': function (status) {
-		if (typeof status == 'number') {
+		if (typeof status === 'number') {
 			this._response.status = status;
 		}
 

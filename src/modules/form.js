@@ -1,45 +1,39 @@
-var Class = require(app.__dirname + 'modules/class.js').Class;
+/*global app*/
 
-var Form = exports.Form = Class.create(app.Emitter, {
-	'initialize': function (key, request) {
-		this.key = key;
-		this._request = request;
-		this._errors = {};
-		this._files = null;
-		this._submitted = false;
+var EventEmitter = require('events').EventEmitter;
 
-		this.action = request.uri;
-		this.method = 'post';
+global.Form = EventEmitter.inherit(function (key, request) {
+	this.key = key;
+	this._request = request;
+	this._errors = {};
+	this._files = {};
+	this.submitted = false;
 
-		if (request.data !== null) {
-			this._submitted = true;
+	this.action = request.uri;
+	this.method = 'post';
+	
+	var values = {};
+	Object.defineProperty(this, 'values', {
+		'get': function () {
+			return values;
+		},
+	});
 
-			var data = request.data;
-			for (var i in data) {
-				if (data.hasOwnProperty(i)) {
-					this[i] = data[i];
-				}
-			}
-		}
-		if (request.files !== null) {
-			this._submitted = true;
-			this._files = request.files;
-		}
-	},
+	if (request.data !== null) {
+		this.submitted = true;
 
-	'isSubmitted': function () {
-		return this._submitted;
-	},
-
-	'getValues': function () {
-		return this;
-	},
-
+		var data = request.data;
+		Object.getOwnPropertyNames(data).forEach(function (key) {
+			values[key] = data[key];
+		});
+	}
+	if (request.files !== null) {
+		this.submitted = true;
+		this._files = request.files;
+	}
+}, {
 	'getFile': function (key) {
-		if (this._files === null || this._files[key] === undefined) {
-			return null;
-		}
-		return this._files[key];
+		return this._files[key] || null;
 	},
 
 	'error': function (key, message) {
@@ -67,11 +61,9 @@ var Form = exports.Form = Class.create(app.Emitter, {
 		}
 
 		var tag = '<form';
-		for (var key in attrs) {
-			if (attrs.hasOwnProperty(key)) {
-				tag += ' ' + key + '="' + attrs[key].replace(/"/g, '\\"') + '"';
-			}
-		}
+		Object.getOwnPropertyNames(attrs).forEach(function (key) {
+			tag += ' ' + key + '="' + attrs[key].replace(/"/g, '\\"') + '"';
+		});
 		tag += '>';
 
 		return tag;
@@ -88,11 +80,9 @@ var Form = exports.Form = Class.create(app.Emitter, {
 		attrs.value = this[attrs.name] || '';
 		
 		var tag = '<input';
-		for (var key in attrs) {
-			if (attrs.hasOwnProperty(key)) {
-				tag += ' ' + key + '="' + attrs[key].replace(/"/g, '\\"') + '"';
-			}
-		}
+		Object.getOwnPropertyNames(attrs).forEach(function (key) {
+			tag += ' ' + key + '="' + attrs[key].replace(/"/g, '\\"') + '"';
+		});
 		tag += ' />';
 
 		return tag;
@@ -104,11 +94,9 @@ var Form = exports.Form = Class.create(app.Emitter, {
 		attrs.type = attrs.type || 'file';
 
 		var tag = '<input';
-		for (var key in attrs) {
-			if (attrs.hasOwnProperty(key)) {
-				tag += ' ' + key + '="' + attrs[key].replace(/"/g, '\\"') + '"';
-			}
-		}
+		Object.getOwnPropertyNames(attrs).forEach(function (key) {
+			tag += ' ' + key + '="' + attrs[key].replace(/"/g, '\\"') + '"';
+		});
 		tag += ' />';
 
 		return tag;
@@ -116,9 +104,7 @@ var Form = exports.Form = Class.create(app.Emitter, {
 
 	'radioList': function (name, options, item_tag_name, checked_value) {
 		var out = [];
-
-		for (var o = 0, oo = options.length; o < oo; ++o) {
-			var option = options[o];
+		options.forEach(function (option, o) {
 			var tag = '<' + (item_tag_name || 'p') + '>';
 			tag += '<label>';
 			tag += '<input type="radio" name="' + name + '" value="' + option[0] + '"';
@@ -131,8 +117,7 @@ var Form = exports.Form = Class.create(app.Emitter, {
 			tag += option[1];
 			tag += '</' + (item_tag_name || 'p') + '>';
 			out.push(tag);
-		}
-
+		}, this.values);
 		return out.join('');
 	},
 
@@ -142,12 +127,10 @@ var Form = exports.Form = Class.create(app.Emitter, {
 		attrs.name = '_form';
 		attrs.value = this.key;
 
-		tag = '<button';
-		for (var key in attrs) {
-			if (attrs.hasOwnProperty(key)) {
-				tag += ' ' + key + '="' + attrs[key].replace(/"/g, '\\"') + '"';
-			}
-		}
+		var tag = '<button';
+		Object.getOwnPropertyNames(attrs).forEach(function (key) {
+			tag += ' ' + key + '="' + attrs[key].replace(/"/g, '\\"') + '"';
+		});
 		tag += '>';
 
 		return tag + label + '</button>';
@@ -161,12 +144,10 @@ var Form = exports.Form = Class.create(app.Emitter, {
 
 		attrs = attrs || {};
 
-		tag = '<' + tag_name;
-		for (var key in attrs) {
-			if (attrs.hasOwnProperty(key)) {
-				tag += ' ' + key + '="' + attrs[key].replace(/"/g, '\\"') + '"';
-			}
-		}
+		var tag = '<' + tag_name;
+		Object.getOwnPropertyNames(attrs).forEach(function (key) {
+			tag += ' ' + key + '="' + attrs[key].replace(/"/g, '\\"') + '"';
+		});
 		tag += '>';
 
 		return tag + error + '</' + tag_name + '>';

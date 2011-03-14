@@ -1,486 +1,531 @@
-var Class = require(app.__dirname + 'modules/class.js').Class;
+var upper = function (a) {
+	return a.toUpperCase();
+};
 
-var Model = Class.create({
-	'fields': [],
+var Model = global.Model = Function.inherit(function (doc) {
+	var d = doc || {};
+	doc = {};
+	Object.getOwnPropertyNames(d).forEach(function (key) {
+		Object.defineProperty(doc, key, Object.getOwnPropertyDescriptor(d, key));
+	});
 
-	'initialize': function (doc) {
-		this.doc = doc || {};
-		this._exists = !!this.doc._id;
+	var _stored = !!doc._id,
+		_changed = !_stored,
+		fieldGetter,
+		fieldSetter,
+		fields = this.constructor.fields || [];
 
-		if (!doc) {
+	Object.defineProperties(this, {
+		'stored': {
+			get: function () {
+				return _stored;
+			},
+			set: function (value) {
+				_stored = !!value;
+			},
+		},
+		'changed': {
+			get: function () {
+				return _changed;
+			},
+			set: function (value) {
+				_changed = !!value;
+			},
+		},
+		'doc': {
+			value: doc,
+			writable: false,
+		},
+		'id': {
+			get: function () {
+				return doc._id || null;
+			},
+			set: function (value) {
+				if (doc._id !== value) {
+					if (doc._id) {
+						console.warn('Rewriting an UUID');
+					}
+
+					doc._id = value;
+					_changed = true;
+					_stored = false;
+				}
+			},
+		},
+	});
+
+	this._cache = {}; // embedded, parent of embedded
+	this._ref = {}; // referenced
+
+	fieldGetter = function (key) {
+		if (fields.indexOf(key) === -1) {
+			throw new Error('Unknown field: ' + key);
+		}
+		return this.doc[key];
+	};
+	fieldSetter = function (key, value) {
+		if (fields.indexOf(key) === -1) {
+			throw new Error('Unknown field: ' + key);
+		}
+		this.doc[key] = value;
+		_changed = true;
+	};
+	fields.forEach(function (key) {
+		if (key.search(':') === -1) {
+			throw new Error('Invalid field name: a namespace required');
+		}
+		Object.defineProperty(this, key, {
+			get: fieldGetter.bind(this, key),
+			set: fieldSetter.bind(this, key),
+		});
+	}, this);
+
+	// id
+	if (this.embedded && !_stored) {
+		this.doc._id = new app.db.pkFactory();
+	}
+
+	// parent
+	if (typeof doc._parent === 'object') {
+		this._cache.parent = new global[this.constructor.parent_constructor](doc._parent);
+		this.parent = this._cache.parent;
+	}
+
+	// fields and child models
+	Object.getOwnPropertyNames(doc).forEach(function (key) {
+		// fields
+		if (key.indexOf(':') !== -1 || key[0] === '_') {
+			this[key] = doc[key];
 			return;
 		}
-
-		for (var key in doc) {
-			if (doc.hasOwnProperty(key) && key.search(':') > -1) {
-				this[key] = doc[key];
-			}
-		}
-	},
-
-	'embed': function (obj, key) {
-		if (obj === undefined) {
-			throw 'Invalid state';
-		}
-
-		var embeddable = null;
-		var obj_many = false;
-
-		var e, ee;
-		var embeds_one = this.__proto__.embeds_one;
-		for (e = 0, ee = embeds_one.length; e < ee; ++e) {
-			if ((!key || embeds_one[e][1] == key) && obj instanceof embeds_one[e][0]) {
-				embeddable = embeds_one[e];
-				break;
-			}
-		}
-		if (embeddable === null) {
-			var embeds_many = this.__proto__.embeds_many;
-			for (e = 0, ee = embeds_many.length; e < ee; ++e) {
-				if ((!key || embeds_many[e][1] == key) && obj instanceof embeds_many[e][0]) {
-					embeddable = embeds_many[e];
-					obj_many = true;
-					break;
-				}
-			}
-		}
-		if (embeddable === null) {
-			throw 'Object not supported';
-		}
-
-		if (key === undefined) {
-			key = embeddable[1];
-		}
-
-		if (obj_many) {
-			if (eval('this.doc.' + key + ' === undefined')) {
-				eval('this.doc.' + key + ' = [];');
-			}
-			eval('this.doc.' + key + '.push(obj.doc)');
-		} else {
-			eval('this.doc.' + key + ' = obj.doc;');
-		}
-
-		return this;
-	},
-
-	'give': function (obj, key) {
-		if (obj === undefined || obj.doc === undefined) {
-			throw 'Invalid state';
-		}
-		if (obj.getId() === null) {
-			throw 'The document has not been saved yet.';
-		}
-
-		var embeddable = null;
-		var obj_many = false;
-		var e, ee;
-		var has_one = this.__proto__.has_one;
-		for (e = 0, ee = has_one.length; e < ee; ++e) {
-			if ((key === undefined || has_one[e][1] == key) && obj instanceof has_one[e][0]) {
-				embeddable = has_one[e];
-				break;
-			}
-		}
-		if (embeddable === null) {
-			var has_many = this.__proto__.has_many;
-			for (e = 0, ee = has_many.length; e < ee; ++e) {
-				if ((key === undefined || has_many[e][1] == key) && obj instanceof has_many[e][0]) {
-					embeddable = has_many[e];
-					obj_many = true;
-					break;
-				}
-			}
-		}
-		if (embeddable === null) {
-			throw 'Object not supported';
-		}
-		
-		if (key === undefined) {
-			key = embeddable[1];
-		}
-
-		var parts = key.split('.'), cur = [];
-		if (parts.length > 1) {
-			var p, pp;
-			for (p = 0, pp = parts.length - 1; p < pp; ++p) {
-				cur.push(parts[p]);
-				if (eval('this.doc.' + cur.join('.') + ' === undefined')) {
-					eval('this.doc.' + cur.join('.') + ' = {}');
-				}
-			}
-		}
-		if (obj_many) {
-			if (eval('this.doc.' + key + ' === undefined')) {
-				eval('this.doc.' + key + ' = [];');
-			}
-			eval('this.doc.' + key + '.push(obj.getId());');
-		} else {
-			eval('this.doc.' + key + ' = obj.getId();');
-		}
-
-		return this;
-	},
-
-	'exists': function () {
-		return this._exists;
-	},
-
-	'getId': function (stringify) {
-		return (stringify) ? this.doc._id.toString() || '' : this.doc._id || null;
-	},
-
-	'setId': function (id) {
-		if (typeof id == 'string') {
-			id = app.db.pkFactory(id);
-		}
-		this.doc._id = id;
-	},
-
-	'getFields': function (keys) {
-		var output = {};
-
-		var fields = keys || this.fields;
-		for (var i = 0, ii = fields.length; i < ii; ++i) {
-			var key = fields[i],
-				default_value = null;
-			if (key instanceof Array) {
-				default_value = key[1];
-				key = key[0];
-			}
-			if (key.search(':') == -1) {
-				throw 'Invalid field name "' + key + '"';
-			}
-
-			output[key] = (this[key] !== undefined) ? this[key] : default_value;
-		}
-
-		return output;
-	},
-
-	'get': function (key, selector, options, callback) {
-		if (arguments[3] === undefined) {
-			if (typeof arguments[2] == 'function') {
-				callback = arguments[2];
-				options = {};
-			}
-		}
-		if (arguments[2] === undefined) {
-			if (typeof arguments[1] == 'function') {
-				callback = arguments[1];
-				options = {};
-				selector = {};
-			}
-		}
-
-		var embeddable = null;
-		var embedded = false;
-		var obj_many = false;
-
-		var e, ee;
-		var has_one = this.__proto__.has_one;
-		for (e = 0, ee = has_one.length; e < ee; ++e) {
-			if (has_one[e][1] == key) {
-				embeddable = has_one[e];
-				break;
-			}
-		}
-		if (embeddable === null) {
-			var has_many = this.__proto__.has_many;
-			for (e = 0, ee = has_many.length; e < ee; ++e) {
-				if (has_many[e][1] == key) {
-					embeddable = has_many[e];
-					obj_many = true;
-					break;
-				}
-			}
-		}
-		if (embeddable === null) {
-			embedded = true;
-			var embeds_one = this.__proto__.embeds_one;
-			for (e = 0, ee = embeds_one.length; e < ee; ++e) {
-				if (embeds_one[e][1] == key) {
-					embeddable = embeds_one[e];
-					break;
-				}
-			}
-		}
-		if (embeddable === null) {
-			var embeds_many = this.__proto__.embeds_many;
-			for (e = 0, ee = embeds_many.length; e < ee; ++e) {
-				if (embeds_many[e][1] == key) {
-					embeddable = embeds_many[e];
-					obj_many = true;
-					break;
-				}
-			}
-		}
-		if (embeddable === null) {
-			throw 'Object not supported';
-		}
-
-		if (!embedded && arguments[1] === undefined) {
-			throw 'Invalid state';
-		}
-
-		var _getIds = function (key) {
-			var keys = key.split('.');
-			var val = this.doc;
-			for (var e = 0; e < keys.length; ++e) {
-				if (val === undefined) {
-					return [];
-				}
-				val = val[keys[e]];
-			}
-			return val || [];
-		}.bind(this);
-		var ids = _getIds(key);
-
-		if (!embedded) {
-			selector._id = (obj_many) ? { $in: ids } : ids;
-			selector['date:deleted'] = { $exists: false };
-			options.one = !obj_many;
-
-			embeddable[0][obj_many ? 'all' : 'one'](selector, options, callback);
-		} else {
-			var res;
-			if (ids === undefined) {
-				res = (obj_many) ? [] : null;
+		// child models
+		var name = key.replace(/^\w/, upper);
+		if (typeof this['get' + name] === 'function') {
+			name = name.replace(/ies$/, 'y').replace(/s$/, '');
+			var cache,
+				M = global[name],
+				embedded = (M !== undefined && M.embedded);
+			if (key[key.length - 1] === 's') {
+				cache = [];
+				doc[key].forEach(function (doc) {
+					if (embedded) {
+						var m = new M(doc);
+						m._cache.parent = this;
+						cache.push(m);
+					} else {
+						cache.push(doc);
+					}
+				}, this);
 			} else {
-				res = [];
-				for (var r = 0, rr = ids.length; r < rr; ++r) {
-					res.push(new embeddable[0](ids[r]));
-				}
-				if (!obj_many) {
-					res = res[0] || null;
-				}
+				cache = new M(doc[key]);
+				cache._cache.parent = this;
 			}
-
-			if (typeof callback == 'function') {
-				callback(res);
-			}
-			return res;
+			this[embedded ? '_cache' : '_ref'][key] = cache;
+			delete doc[key];
 		}
+	}, this);
+}, {
+	'toString': function () {
+		return '[object Model]';
 	},
-
-	'update': function (fields, callback) {
-		for (var key in fields) {
-			if (fields.hasOwnProperty(key) && key.search(':') > - 1) {
-				this[key] = fields[key];
-			}
-		}
-		this.save(callback);
-	},
-	'updateTimestamp': function (key) {
-		this[key] = Math.round(new Date().getTime() / 1000);
-	},
-
-	'save': function (callback) {
-		for (var key in this) {
-			if (this.hasOwnProperty(key) && key.search(':') > -1) {
-				this.doc[key] = this[key];
-			}
+	'save': function (options, callback) {
+		if (arguments.length === 1) {
+			callback = arguments[0];
+			options = {};
 		}
 
-		if (!this.constructor.is_embedded) {
-			app.db.collection(this.collection_name, function (err, collection) {
+		var doc = this.doc;
+		Object.getOwnPropertyNames(this).forEach(function (key) {
+			if (key.indexOf(':') === -1) {
+				return;
+			}
+			if (doc[key] !== this[key]) {
+				doc[key] = this[key];
+				this.changed = true;
+			}
+		}, this);
+
+		if (!this.changed) {
+			if (typeof callback === 'function') {
+				callback(null);
+			}
+			return;
+		}
+		if (typeof this.beforeSave === 'function') {
+			this.beforeSave();
+		}
+		if (!this.isValid()) {
+			throw new Error('Item is not valid');
+		}
+
+		var model = this;
+
+		if (!this.embedded) {
+			app.db.collection(model.collection, function (err, collection) {
 				if (err) {
 					throw err;
 				}
-
-				collection.save(this.doc, { 'options': { 'insert': !this.exists() } }, function (err) {
-					if (err) {
-						throw err;
-					}
+				collection.save(model.doc, { 'insert': !model.stored }, function () {
+					var cache = model._cache;
+					Object.getOwnPropertyNames(cache).forEach(function (key) {
+						var models = cache[key];
+						if (models instanceof Array === false) {
+							models = [models];
+						}
+						models.some(function (m) {
+							if (!m.embedded) {
+								return true;
+							}
+							m.stored = true;
+						});
+					});
 
 					if (typeof callback === 'function') {
 						callback();
 					}
 				});
-			}.bind(this));
+			});
 		} else {
-			if (typeof callback === 'function') {
-				callback();
-			}
+			// Embedded objects always have their parent in cache and the parent object has all embedded objects cached as well.
+			// We are going to get all walk through all those embedded objects until we hit the correct association.
+			this.getParent(function (parent) {
+				if (!parent.stored) {
+					throw new Error('Item is not embedded when it should be.');
+				}
+				var cache = parent._cache;
+				var assoc_key,
+					assocs;
+				Object.getOwnPropertyNames(cache).some(function (key) {
+					var items = cache[key];
+					if (items instanceof Array === false) {
+						items = items ? [items] : [];
+					}
+					if (items[0] !== undefined && model instanceof items[0].constructor) {
+						assoc_key = key;
+						assocs = cache[key];
+						return true;
+					}
+				});
+				if (assocs instanceof Array) {
+					if (assocs.id.toString() === model.id.toString()) {
+						
+					}
+				}
+			});
 		}
 	},
 
-	'remove': function (callback) {
-		if (!this.exists()) {
-			if (typeof callback == 'function') {
-				callback(null);
-			}
-			return;
+	'remove': function (options, callback) {
+		if (arguments.length === 1) {
+			callback = arguments[0];
+			options = {};
 		}
 
-		app.db.collection(this.collection_name, function (err, collection) {
-			collection.remove({ _id: this.getId() }, callback);
+		var id = this.id;
+		if (id === null) {
+			throw new Error('Error: Object has no ID');
+		}
+		if (typeof this.beforeDelete === 'function') {
+			this.beforeDelete();
+		}
+
+		app.db.collection(this.collection, function (err, collection) {
+			collection.remove({ _id: id }, callback);
 		});
-	}
+	},
+
+	'isValid': function () {
+		var errors = {},
+			errors_json,
+			rules;
+
+		rules = this.constructor.prototype.validates_presence_of || [];
+		rules.forEach(function (key) {
+			if (!this[key]) {
+				if (errors[key] === undefined) {
+					errors[key] = [];
+				}
+				errors[key].push('presence');
+			}
+		}, this);
+
+		rules = this.constructor.prototype.validates_format_of || {};
+		Object.getOwnPropertyNames(rules).forEach(function () {
+			if (!rules[key].test(this[key])) {
+				if (errors[key] === undefined) {
+					errors[key] = [];
+				}
+				errors[key].push('format');
+			}
+		}, this);
+
+		errors_json = JSON.stringify(errors);
+		this.errors = (errors_json !== '{}') ? errors : null;
+		return !this.errors;
+	},
+
+	'updateTimestamp': function (key) {
+		var desc = Object.getOwnPropertyDescriptor(this, key);
+		if (desc === undefined) {
+			throw new Error('Unknown field (' + key + ')');
+		}
+		this[key] = Math.round(new Date().getTime() / 1000);
+	},
+
+	'ref': function (m) {
+		if (m instanceof Model === false) {
+			throw new Error('ref: Only models can be referenced.');
+		}
+		if (m.id === null) {
+			throw new Error('embed: Only saved models can be referenced.');
+		}
+
+		var key = this._getKey(m);
+		this._cacheItem(key, m.id, true);
+		this.doc[key] = this._ref[key];
+		this.changed = true;
+	},
+
+	'embed': function (m) {
+		if (m instanceof Model === false) {
+			throw new Error('embed: Only models can be embedded.');
+		}
+
+		var key = this._getKey(m);
+		this._cacheItem(key, m);
+		this.doc[key] = this._cache[key];
+		this.changed = true;
+	},
+
+	'_getKey': function (m) {
+		var model;
+		Model.getChildFunctions().some(function (fn) {
+			if (m instanceof fn) {
+				model = fn;
+				return true;
+			}
+		});
+		var key = model.key;
+		if (typeof this['get' + key.replace(/^\w/, upper)] !== 'function') {
+			key = key.replace(/y$/, 'ies').replace(/[^s]$/, function (a) {
+				return a + 's';
+			});
+		}
+		return key;
+	},
+	'_cacheItem': function (key, item, ref) {
+		var many = (key[key.length - 1] === 's'),
+			cache = this[ref ? '_ref' : '_cache'];
+		if (many) {
+			if (cache[key] === undefined) {
+				cache[key] = [];
+			}
+			cache[key].push(item);
+		} else {
+			cache[key] = item;
+		}
+	},
 });
 
-Model.one = function (selector, options, callback) {
-	if (arguments[2] === undefined) {
-		if (typeof arguments[1] == 'function') {
-			callback = arguments[1];
-			options = {};
-		}
-	}
-	if (options instanceof Array) {
-		options = {
-			'fields': options
-		};
-	}
-	if (typeof selector == 'string') {
-		selector = {
-			_id: selector
-		};
+Object.defineProperties(Model.prototype, {
+	'collection': {
+		get: function () {
+			if (this.embedded) {
+				throw new Error('Embedded models do not have a collection defined.');
+			}
+			return this.constructor.collection;
+		},
+	},
+	'embedded': {
+		get: function () {
+			return !!this.constructor.embedded;
+		},
+	},
+});
+
+var originalInherit = Model.inherit;
+Model.inherit = function (key, init, proto) {
+	if (typeof arguments[0] !== 'string' && arguments[0] !== undefined) {
+		proto = arguments[1];
+		init = arguments[0];
+		key = undefined;
 	}
 
-	options.one = true;
-
-	this.all(selector, options, callback);
+	var M = originalInherit.call(this, init, proto);
+	if (key !== undefined) {
+		M.key = key;
+		M.collection = key.replace(/y$/, 'ies').replace(/[^s]$/, function (a) {
+			return a + 's';
+		});
+	}
+	return M;
 };
 
-Model.all = function (selector, options, callback) {
-	if (arguments[2] === undefined) {
-		if (typeof arguments[1] == 'function') {
-			callback = arguments[1];
-			options = {};
-		}
+Model.one = function (selector, options, callback) {
+	if (arguments.length === 1) {
+		callback = arguments[0];
+		options = {};
+		selector = {};
+	} else if (arguments.length === 2) {
+		callback = arguments[1];
+		options = {};
 	}
-	if (options instanceof Array) {
-		options = {
-			'fields': options
-		};
+	selector = selector || {};
+	options = options || {};
+
+	options.limit = 1;
+	this.all(selector, options, callback);
+};
+Model.all = function (selector, options, callback) {
+	if (arguments.length === 1) {
+		callback = arguments[0];
+		options = {};
+		selector = {};
+	} else if (arguments.length === 2) {
+		callback = arguments[1];
+		options = {};
+	}
+	selector = selector || {};
+	options = options || {};
+	if (typeof callback !== 'function') {
+		throw new Error('Missing callback');
 	}
 
-	if (selector._id !== undefined && typeof selector._id == 'string') {
+	var M = this;
+
+	if (typeof selector !== 'object') {
+		selector = { _id: selector };
+	}
+	if (selector._id !== undefined && typeof selector._id === 'string') {
 		selector._id = app.db.pkFactory(selector._id);
 	}
 
-	var one = !!options.one;
-	if (one) {
-		delete options.one;
-	}
 	if (options.sort === undefined) {
 		options.sort = 'date:created';
 	}
 
-	app.db.collection(this.collection_name, function (err, collection) {
-		collection[one ? 'findOne' : 'find'](selector || {}, options, function (err, docs) {
-			if (!one) {
+	app.db.collection(this.collection, function (err, collection) {
+		collection[options.limit === 1 ? 'findOne' : 'find'](selector || {}, options, function (err, docs) {
+			if (options.limit !== 1) {
 				docs.toArray(function (err, docs) {
 					var res = [];
 					for (var d = 0, dd = docs.length; d < dd; ++d) {
-						res.push(new this(docs[d]));
+						res.push(new M(docs[d]));
 					}
 
 					callback(res);
-				}.bind(this));
+				});
 			} else {
-				callback(new this(docs));
+				callback(new M(docs));
 			}
-		}.bind(this));
-	}.bind(this));
+		});
+	});
 };
 
-var Factory = exports.Factory = {
-	'models': {},
-
-	'create': function (model_name, collection_name, spec) {
-		if (model_name === undefined || collection_name === undefined) {
-			throw 'Invalid state';
-		}
-		if (typeof collection_name != 'string') {
-			if (typeof collection_name != 'object') {
-				throw 'Invalid state';
-			}
-			spec = collection_name;
-			collection_name = false;
-		}
-
-		spec.name = model_name;
-		spec.collection_name = collection_name;
-
-		if (spec.embeds_one === undefined) {
-			spec.embeds_one = [];
-		} else if (spec.embeds_one.length && spec.embeds_one[0] instanceof Array === false) {
-			spec.embeds_one = [spec.embeds_one];
-		}
-
-		if (spec.embeds_many === undefined) {
-			spec.embeds_many = [];
-		} else if (spec.embeds_many.length && spec.embeds_many[0] instanceof Array === false) {
-			spec.embeds_many = [spec.embeds_many];
-		}
-
-		if (spec.has_one === undefined) {
-			spec.has_one = [];
-		} else if (spec.has_one.length && spec.has_one[0] instanceof Array === false) {
-			spec.has_one = [spec.has_one];
-		}
-
-		if (spec.has_many === undefined) {
-			spec.has_many = [];
-		} else if (spec.has_many.length && spec.has_many[0] instanceof Array === false) {
-			spec.has_many = [spec.has_many];
-		}
-
-		spec.embedded_in = [];
-		spec.balongs_to = [];
-
-		var model = Class.create(Model, spec);
-		model.NAME = model_name;
-		model.embeds_one = spec.embeds_one;
-		model.embeds_many = spec.embeds_many;		
-		model.has_one = spec.has_one;
-		model.has_many = spec.has_many;
-		model.embedded_in = [];
-		model.belongs_to = [];
-		model.collection_name = collection_name;
-		model.is_embedded = !collection_name;
-
-		if (!model.is_embedded) {
-			// add the static methods as well
-			for (var method in Model) {
-				if (Model.hasOwnProperty(method) && typeof Model[method] == 'function') {
-					model[method] = Model[method];
-				}
-			}
-		}
-
-		var i, ii;
-		ii = spec.embeds_one.length;
-		if (ii) {
-			for (i = 0; i < ii; ++i) {
-				spec.embeds_one[i][0].embedded_in.push(model);
-				//spec.embeds_one[i][0].getPrototype().embedded_in.push(model);
-			}
-		}
-		ii = spec.embeds_many.length;
-		if (ii) {
-			for (i = 0; i < ii; ++i) {
-				spec.embeds_many[i][0].embedded_in.push(model);
-				//spec.embeds_many[i][0].getPrototype().embedded_in.push(model);
-			}
-		}
-		ii = spec.has_one.length;
-		if (ii) {
-			for (i = 0; i < ii; ++i) {
-				spec.has_one[i][0].belongs_to.push(model);
-				//spec.has_one[i][0].getPrototype().belongs_to.push(model);
-			}
-		}
-		ii = spec.has_many.length;
-		if (ii) {
-			for (i = 0; i < ii; ++i) {
-				spec.has_many[i][0].belongs_to.push(model);
-				//spec.has_many[i][0].getPrototype().belongs_to.push(model);
-			}
-		}
-
-		Factory.models[model_name] = model;
-		return model;
+Model.has_one = function (has_one) {
+	if (has_one instanceof Array !== true) {
+		has_one = Array.prototype.slice.call(arguments);
 	}
+
+	has_many.forEach(function (key) {
+		var name = key.replace(/^\w/, upper);
+		this.prototype['get' + name] = function (callback) {
+			var M = global[name.replace(/ies$/, 'y').replace(/s$/, '')],
+				id = this._ref[key] || null;
+			M.one({ '_id': id }, callback);
+		};
+	}, this);
+};
+Model.has_many = function (has_many) {
+	if (has_many instanceof Array !== true) {
+		has_many = Array.prototype.slice.call(arguments);
+	}
+
+	has_many.forEach(function (key) {
+		var name = key.replace(/^\w/, upper);
+		this.prototype['get' + name] = function (selector, options, callback) {
+			if (arguments.length === 1) {
+				callback = arguments[0];
+				options = {};
+				selector = {};
+			} else if (arguments.length === 2) {
+				callback = arguments[1];
+				options = arguments[0];
+				selector = {};
+			}
+
+			var M = global[name.replace(/ies$/, 'y').replace(/s$/, '')],
+				ids = this._ref[key] || [];
+			if (ids.length === 0) {
+				return callback([]);
+			}
+			selector._id = { $in: ids };
+			M.all(selector, options, callback);
+		};
+	}, this);
+};
+Model.belongs_to = function (key) {
+	if (key instanceof Array === true || arguments.length > 1) {
+		throw new Error('belongs_to: Multiple parents are not implemented');
+	}
+
+	var name = key.replace(/^\w/, upper);
+	this.prototype.getParent = function (callback) {
+		var selector = {};
+		selector[this.constructor.collection] = this.id;
+		global[name].one(selector, callback);
+	};
+};
+
+Model.embeds_one = function (embeds_one) {
+	if (embeds_one instanceof Array !== true) {
+		embeds_one = Array.prototype.slice.call(arguments);
+	}
+
+	embeds_one.forEach(function (key) {
+		var name = key.replace(/^\w/, upper);
+		this.prototype['get' + name] = function (callback) {
+			var model = this._cache[key] || null;
+			if (typeof callback === 'function') {
+				callback(model)
+			} else {
+				return model;
+			}
+		};
+	}, this);
+};
+Model.embeds_many = function (embeds_many) {
+	if (embeds_many instanceof Array !== true) {
+		embeds_many = Array.prototype.slice.call(arguments);
+	}
+
+	embeds_many.forEach(function (key) {
+		var name = key.replace(/^\w/, upper);
+		this.prototype['get' + name] = function (callback) {
+			var models = this._cache[key] || [];
+			if (typeof callback === 'function') {
+				callback(models)
+			} else {
+				return models;
+			}
+		};
+	}, this);
+};
+Model.embedded_in = function (embedded_in) {
+	if (embedded_in instanceof Array === true || arguments.length > 1) {
+		throw new Error('belongs_to: Multiple parents are not implemented');
+	}
+
+	this.embedded = true;
+	this.prototype.getParent = function (callback) {
+		var parent = this._cache.parent;
+		if (parent === undefined) {
+			throw new Error('Object not embedded');
+		}
+		if (typeof callback === 'function') {
+			callback(parent);
+		} else {
+			return parent;
+		}
+	};
 };
