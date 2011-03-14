@@ -82,7 +82,7 @@ Controller files are stored in the `app_dir/controllers/` directory. Router name
 		// Define the 'show' view
 		'show': function (params) {
 			User.one(params.id, function (user) {
-				if (!user.exists()) {
+				if (!user.stored) {
 					return this.terminate(404, 'No such user');
 				}
 
@@ -93,7 +93,7 @@ Controller files are stored in the `app_dir/controllers/` directory. Router name
 
 		'friends': function(params) {
 			User.one(params.id, function (user) {
-				if (!user.exists()) {
+				if (!user.stored) {
 					return this.terminate(404, 'No such user');
 				}
 				this.template.user = user;
