@@ -63,7 +63,6 @@ var app = {
 		require('./modules/template.js');
 		require('./modules/model.js');
 		require('./modules/controller.js');
-		require('./modules/models/session.js');
 
 		console.log('Starting the server...');
 
@@ -76,6 +75,12 @@ var app = {
 				callback();
 			}
 		});
+
+		if (this.db !== undefined) {
+			require('./modules/models/session.js');
+		} else {
+			console.log('Sessions are not available.');
+		}
 
 		Template.loadHelpers(Path.join(SOURCE_DIR, 'helpers'));
 		Template.loadHelpers(Path.join(APP_DIR, 'helpers'));
@@ -172,8 +177,10 @@ var app = {
 				var controller = new module.Controller(request, response, route);
 
 				var fn = function (session) {
-					controller.setSession(session);
-					response.setCookie('FLOWONSESSID', session.id, app._cfg.session_expiration, undefined, '.' + request.host.replace(/:\d+$/, ''), false, true);
+					if (session !== undefined) {
+						controller.setSession(session);
+						response.setCookie('FLOWONSESSID', session.id, app._cfg.session_expiration, undefined, '.' + request.host.replace(/:\d+$/, ''), false, true);
+					}
 
 					var execution_timeout = setTimeout(function () {
 						controller.terminate(503, 'Reached the maximum execution time of ' + app._cfg.max_execution_time + 's.');
@@ -208,17 +215,21 @@ var app = {
 					});
 				};
 
-				if (request.cookies.FLOWONSESSID) {
-					Session.one(request.cookies.FLOWONSESSID, function (session) {
-						if (!session.stored) {
-							session['date:created'] = Math.floor(new Date().getTime() / 1000);
-							session.save(initSession.bind(this, session));
-						} else {
-							fn(session);
-						}
-					});
+				if (this.db !== undefined) {
+					if (request.cookies.FLOWONSESSID) {
+						Session.one(request.cookies.FLOWONSESSID, function (session) {
+							if (!session.stored) {
+								session['date:created'] = Math.floor(new Date().getTime() / 1000);
+								session.save(initSession.bind(this, session));
+							} else {
+								fn(session);
+							}
+						});
+					} else {
+						initSession(new Session());
+					}
 				} else {
-					initSession(new Session());
+					fn();
 				}
 			});
 		});
