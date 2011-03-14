@@ -47,7 +47,7 @@ FlowOn is a very simple but powerful MVC framework for building RIAs.
 	router.push('/user/:id/friends', {
 		'controller': 'user',
 		'view': 'friends',
-		'params': app.ROUTER_PARAM_INTEGER // sugar, batch setting
+		'params': router.PARAM_INTEGER // sugar, batch setting
 	});
 
 	router.namespace = null;
@@ -77,7 +77,7 @@ Controller files are stored in the `app_dir/controllers/` directory. Router name
 	// Require needed modules
 	require(app._cfg.app_dir + 'models/user.js');
 
-	// Create the controller class; the inheritance engine is borrowed from the Prototype.js library
+	// Create the controller class; FlowOn uses its own inheritance engine (Function.inherit)
 	var Controller = exports.Controller = global.Controller.inherit({
 		// Define the 'show' view
 		'show': function (params) {
