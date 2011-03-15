@@ -138,7 +138,7 @@ global.Router = Function.inherit(function () {
 					});
 				} else {
 					if (Object.getOwnPropertyNames(query).some(function (key) {
-						if (!rules.hasOwnProperty(key) || !rules[key].test(query[key])) {
+						if (rules.hasOwnProperty(key) && !rules[key].test(query[key])) {
 							return true;
 						}
 						params[key] = query[key];
