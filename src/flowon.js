@@ -215,7 +215,7 @@ var app = {
 					});
 				};
 
-				if (this.db !== undefined) {
+				if (app.db !== undefined) {
 					if (request.cookies.FLOWONSESSID) {
 						Session.one(request.cookies.FLOWONSESSID, function (session) {
 							if (!session.stored) {
