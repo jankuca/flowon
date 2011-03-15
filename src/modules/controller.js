@@ -1,8 +1,8 @@
 /*global app*/
 /*global APP_DIR, SOURCE_DIR*/
+require(SOURCE_DIR + 'modules/form.js')
 
-var Path = require('path'),
-	Form = require(SOURCE_DIR + 'modules/form.js').Form;
+var Path = require('path');
 
 global.Controller = Function.inherit(function (request, response, route) {
 	this._request = request;
