@@ -91,6 +91,10 @@ global.Controller = Function.inherit(function (request, response, route) {
 	},
 
 	'terminate': function (status, template_path, message) {
+		if (this._rendered) {
+			return;
+		}
+
 		if (typeof arguments[0] === 'number') {
 			this._response.status = arguments[0];
 		} else if (arguments.length === 1) {
@@ -132,6 +136,7 @@ global.Controller = Function.inherit(function (request, response, route) {
 			this._setContentTypeHeader();
 			this._response.write(body);
 			this._response.end();
+			this._rendered = true;
 		}.bind(this));
 
 		//this.getSession().save();
@@ -155,6 +160,7 @@ global.Controller = Function.inherit(function (request, response, route) {
 
 			this._response.write(body);
 			this._response.end();
+			this._rendered = true;
 		}.bind(this));
 	},
 
