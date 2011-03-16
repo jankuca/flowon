@@ -63,6 +63,7 @@ var app = {
 		require('./modules/template.js');
 		require('./modules/model.js');
 		require('./modules/controller.js');
+		require('./modules/apicontroller.js');
 
 		console.log('Starting the server...');
 
@@ -183,7 +184,9 @@ var app = {
 					}
 
 					var execution_timeout = setTimeout(function () {
-						controller.terminate(503, 'Reached the maximum execution time of ' + app._cfg.max_execution_time + 's.');
+						if (!controller._rendered) {
+							controller.terminate(503, 'Reached the maximum execution time of ' + app._cfg.max_execution_time + 's.');
+						}
 					}, app._cfg.max_execution_time * 1000);
 
 					var startup_mode;
@@ -195,6 +198,11 @@ var app = {
 
 					if (startup_mode === false) {
 						return;
+					} else if (startup_mode !== undefined) {
+						switch (startup_mode) {
+						case controller.NO_EXECUTION_LIMIT:
+							clearTimeout(execution_timeout);
+						}
 					} else if (controller[route.view] === undefined) {
 						return controller.render(200);
 					} else {
