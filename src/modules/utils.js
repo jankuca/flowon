@@ -96,4 +96,16 @@ Function.prototype.getChildFunctions = function () {
 	return (this.__children__ !== undefined) ? this.__children__.slice() : [];
 };
 
+
+if (Array.prototype.first === undefined) {
+    Array.prototype.first = function () {
+        return this[0] || undefined;
+    };
+}
+if (Array.prototype.last === undefined) {
+    Array.prototype.last = function () {
+        return this.length ? this[this.length - 1] : undefined;
+    };
+}
+
 }());
