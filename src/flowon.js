@@ -65,6 +65,8 @@ var app = {
 		require('./modules/controller.js');
 		require('./modules/apicontroller.js');
 
+		this._loadModels();
+
 		console.log('Starting the server...');
 
 		var app = this;
@@ -85,6 +87,14 @@ var app = {
 
 		Template.loadHelpers(Path.join(SOURCE_DIR, 'helpers'));
 		Template.loadHelpers(Path.join(APP_DIR, 'helpers'));
+	},
+
+	'_loadModels': function () {
+		FileSystem.readdirSync(Path.join(APP_DIR, 'models').forEach(function (filename) {
+			if (filename.substring(-3) === '.js') {
+				require(Path.join(APP_DIR, 'models', filename));
+			}
+		});
 	},
 
 	'_startDb': function (callback) {
