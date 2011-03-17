@@ -90,7 +90,7 @@ var app = {
 	},
 
 	'_loadModels': function () {
-		FileSystem.readdirSync(Path.join(APP_DIR, 'models').forEach(function (filename) {
+		FileSystem.readdirSync(Path.join(APP_DIR, 'models')).forEach(function (filename) {
 			if (filename.substring(-3) === '.js') {
 				require(Path.join(APP_DIR, 'models', filename));
 			}
