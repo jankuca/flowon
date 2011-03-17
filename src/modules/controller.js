@@ -24,6 +24,11 @@ global.Controller = Function.inherit(function (request, response, route) {
 	this.template = new Template(this);
 	this.template._layout_path = Path.join(APP_DIR, 'templates', this._namespace, '@layout.' + this._format + '.ejs');
 
+	var host = request.host.split('@');
+	host = host[host.length > 1 ? 1 : 0].split(':')[0].split('.');
+	host = (host.length > 1) ? host[host.length - 2] + '.' + host[host.length - 1] : host[0];
+	this.HOST = host;
+
 	Object.defineProperties(this, {
 		'NO_EXECUTION_LIMIT': { 'value': 2 },
 	});
