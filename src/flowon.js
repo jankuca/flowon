@@ -2,7 +2,7 @@
 
 require.paths.unshift(__dirname + '/../lib/');
 
-require('./modules/utils.js');
+require('../lib/utils.js');
 require('./modules/router.js');
 
 var Http = require('http'),
