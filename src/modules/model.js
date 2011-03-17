@@ -272,7 +272,7 @@ var Model = global.Model = Function.inherit(function (doc) {
 		this[key] = Math.round(new Date().getTime() / 1000);
 	},
 
-	'ref': function (m) {
+	'ref': function (m, key) {
 		if (m instanceof Model === false) {
 			throw new Error('ref: Only models can be referenced.');
 		}
@@ -280,7 +280,7 @@ var Model = global.Model = Function.inherit(function (doc) {
 			throw new Error('embed: Only saved models can be referenced.');
 		}
 
-		var key = this._getKey(m);
+		key = key || this._getKey(m);
 		this._cacheItem(key, m.id, true);
 		this.doc[key] = this._ref[key];
 		this.changed = true;
