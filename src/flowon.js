@@ -67,8 +67,6 @@ var app = {
 
 		this._loadModels();
 
-		console.log('Starting the server...');
-
 		var app = this;
 
 		this._startDb(function () {
@@ -80,9 +78,14 @@ var app = {
 		});
 
 		if (this.db !== undefined) {
-			require('./modules/models/session.js');
+			if (global.Session === undefined) {
+				require('./modules/models/session.js');
+				console.log('-- Info: Using the built-in session model.');
+			} else {
+				console.log('-- Info: Using a custom session model.');
+			}
 		} else {
-			console.log('Sessions are not available.');
+			console.log('-- Warning: Sessions are not available.');
 		}
 
 		Template.loadHelpers(Path.join(SOURCE_DIR, 'helpers'));
@@ -99,12 +102,14 @@ var app = {
 
 	'_startDb': function (callback) {
 		if (this._cfg.db_type === null) {
-			console.log('Starting without a database');
+			console.warn('-- Warning: Starting without a database');
 		} else if (this.db_driver === undefined) {
-			console.log('Database driver not loaded.');
+			console.error('-- Error: Database driver not loaded');
 			return;
 		}
-		console.log('Using the "' + this._cfg.db_type + '" database driver.');
+		if (this._cfg.db_type) {
+			console.log('-- Info: Using the "' + this._cfg.db_type + '" database driver.');
+		}
 		switch (this._cfg.db_type) {
 		case 'mongodb':
 			this.db = new this.db_driver.Db(
@@ -117,7 +122,7 @@ var app = {
 			);
 			this.db.open(function (error) {
 				if (error) {
-					console.log('Connection to the database failed: ' + error);
+					console.error('-- Error: Connection to the database failed: ' + error);
 					return;
 				}
 
@@ -137,12 +142,14 @@ var app = {
 		this._server = Http.createServer(this._handleRequest.bind(this));
 		this._server.listen(this._cfg.port);
 		
-		console.log('OK... Server is listening on ' + (this._cfg.domain || '*') + ':' + this._cfg.port + '.');
+		console.log('== OK == Server is listening on ' + (this._cfg.domain || '*') + ':' + this._cfg.port + '.');
+		console.log('');
 	},
 	'_stopServer': function () {
 		this._server.close();
-
-		console.log('OK... Server stopped');
+		
+		console.log('');
+		console.log('== OK == Server stopped.');
 	},
 	'_error': function (status, exc, request, response) {
 		var controller = new Controller(request, response);
@@ -158,7 +165,6 @@ var app = {
 		var app = this,
 			uri = Url.parse(request.url).pathname,
 			route;
-		console.log(request.method + ' ' + uri);
 
 		request = new HttpRequest(request);
 		response = new HttpResponse(response);
@@ -168,8 +174,8 @@ var app = {
 		} catch (exc) {
 			return app._error(503, exc, request, response);
 		}
+		console.log(request.method + ' ' + uri + (route === null ? ' --> static' : ''));
 		if (route === null) {
-			console.log('    ' + uri + ' --> static');
 			return this._handleStaticRequest(uri, request, response);
 		}
 

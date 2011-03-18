@@ -90,12 +90,12 @@ Template.Helpers = EJS.Helpers.prototype;
 Template.loadHelpers = function (dirname, callback) {
 	FileSystem.readdir(dirname, function (error, files) {
 		if (error) {
-			console.error('Could not load template helpers from ' + dirname);
+			console.error('-- Warning: Could not load template helpers from ' + dirname);
 		} else {
 			files.forEach(function (file) {
 				Template.Helpers[file.split('.')[0]] = require(Path.join(dirname, file)).helper;
 			});
-			console.log('Loaded template helpers from ' + dirname);
+			console.log('-- Info: Loaded template helpers from ' + dirname);
 		}
 
 		if (typeof callback === 'function') {
