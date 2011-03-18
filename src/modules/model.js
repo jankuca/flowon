@@ -107,7 +107,7 @@ var Model = global.Model = Function.inherit(function (doc) {
 				embedded = (M !== undefined && M.embedded);
 			if (key[key.length - 1] === 's') {
 				cache = [];
-				doc[key].forEach(function (doc) {
+				(doc[key] instanceof Array ? doc[key] : []).forEach(function (doc) {
 					if (embedded) {
 						var m = new M(doc);
 						m._cache.parent = this;
