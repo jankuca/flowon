@@ -11,6 +11,7 @@ global.HttpRequest = require('events').EventEmitter.inherit(function (request) {
 	this.uri = Url.parse(request.url).pathname;
 	this.method = request.method;
 	this.headers = request.headers;
+	this.ip = request.headers['x-forwarded-for'] || request.connection.remoteAddress;
 	this.ready = false;
 
 	Object.defineProperty(this, 'ajax', {
