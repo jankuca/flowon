@@ -27,6 +27,14 @@ global.Controller = Function.inherit(function (request, response, route) {
 	Object.defineProperties(this, {
 		'NO_EXECUTION_LIMIT': { 'value': 2 },
 	});
+
+	Object.defineProperty(this, 'ajax', {
+		'get': function () {
+			return this._request.ajax;
+		},
+		'set': function (value) {
+		},
+	});
 }, {
 	'startup': function () {
 		this.template._namespace = this._namespace;
@@ -41,10 +49,6 @@ global.Controller = Function.inherit(function (request, response, route) {
 		} else {
 			this._response.setHeader(key, value);
 		}
-	},
-
-	'isAjax': function () {
-		return this._request.isAjax();
 	},
 
 	'getSession': function () {

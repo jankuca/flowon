@@ -86,9 +86,6 @@ global.HttpRequest = require('events').EventEmitter.inherit(function (request) {
 		this.ready = true;
 	}
 }, {
-	'isAjax': function () {
-		return !!this._ajax;
-	},
 	'on': function (type, listener) {
 		this.$super(type, listener);
 
