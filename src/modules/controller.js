@@ -152,6 +152,10 @@ global.Controller = Function.inherit(function (request, response, route) {
 	},
 
 	'render': function (status) {
+		if (this._rendered) {
+			return;
+		}
+
 		if (typeof status === 'number') {
 			this._response.status = status;
 		}
