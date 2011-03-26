@@ -76,16 +76,21 @@ global.Controller = Function.inherit(function (request, response, route) {
 		if (arguments.length === 0) {
 			return this._request.url;
 		}
+		if (arguments.length === 2 && typeof arguments[1] === 'boolean') {
+			abs = arguments[1];
+			params = undefined;
+		}
 
 		ncv = ncv.split(':');
 		var len = ncv.length;
 
-		return app.router.resolve({
+		var uri = app.router.resolve({
 			'namespace': ncv[len - 3] || null,
-			'controller': ncv[len - 2] || 'default',
+			'controller': ncv[len - 2] || this._name || 'default',
 			'view': ncv[len - 1] || 'default',
 			'params': params
-		}, abs);
+		});
+		return !abs ? uri : 'http://' + this._request.host + uri;
 	},
 
 	'redirect': function (ncv, params) {
