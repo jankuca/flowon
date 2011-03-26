@@ -10,3 +10,6 @@
 [submodule "lib/node-formidable"]
 	path = lib/node-formidable
 	url = git://github.com/felixge/node-formidable.git
+[submodule "lib/utils"]
+	path = lib/utils
+	url = git://gist.github.com/871775.git
