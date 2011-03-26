@@ -4,6 +4,7 @@ var RelativeDate = require('relativedate/relativedate.js');
 
 global.HttpResponse = Function.inherit(function (response) {
 	this._head_sent = false;
+	this._body_sent = false;
 
 	this.response = response;
 	this.status = 200;
@@ -12,6 +13,10 @@ global.HttpResponse = Function.inherit(function (response) {
 }, {
 	'isHeadSent': function () {
 		return this._head_sent;
+	},
+
+	'isBodySent': function () {
+		return this._body_sent;
 	},
 
 	'getHeader': function (key) {
@@ -74,15 +79,18 @@ global.HttpResponse = Function.inherit(function (response) {
 		if (!this.isHeadSent()) {
 			this.writeHead();
 		}
-
-		this.response.write(content, encoding);
+		if (!this.isBodySent()) {
+			this.response.write(content, encoding);
+		}
 	},
 
 	'end': function () {
 		if (!this.isHeadSent()) {
 			this.writeHead();
 		}
-
-		this.response.end();
+		if (!this.isBodySent()) {
+			this.response.end();
+		}
+		this._body_sent = true;
 	},
 });
