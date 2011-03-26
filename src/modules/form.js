@@ -27,7 +27,7 @@ global.Form = EventEmitter.inherit(function (key, request) {
 			values[key] = data[key];
 		});
 	}
-	if (request.files !== null) {
+	if (Object.keys(request.files).length !== 0) {
 		this.submitted = true;
 		this._files = request.files;
 	}
