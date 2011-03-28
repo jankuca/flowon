@@ -99,9 +99,8 @@ global.Controller = Function.inherit(function (request, response, route) {
 	},
 
 	'redirect': function (ncv, params) {
-		this._response.status = 302;
 		this.header('location', this.link(ncv.replace(/:$/, ':default'), params) || this.link());
-		this._response.end();
+		this.teriminate(302);
 	},
 
 	'terminate': function (status, template_path, message) {
