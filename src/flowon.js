@@ -174,7 +174,7 @@ var app = {
 		} catch (exc) {
 			return app._error(503, exc, request, response);
 		}
-		console.log('[' + new Date().toUTCString() + '][' + request.ip + '] ' + request.method + ' ' + uri + (route === null ? ' --> static' : ''));
+		console.log('[' + new Date().toUTCString() + '][' + request.ip + '] ' + request.method + ' ' + request.uri + (route === null ? ' --> static' : ''));
 		if (route === null) {
 			return this._handleStaticRequest(uri, request, response);
 		}
