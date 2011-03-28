@@ -17,19 +17,24 @@ global.Form = EventEmitter.inherit(function (key, request) {
 		'get': function () {
 			return values;
 		},
+		'set': function (value) {
+			Object.keys(value).forEach(function (key) {
+				values[key] = value[key];
+			});
+		},
 	});
 
-	if (request.data !== null) {
+	var data = request.data;
+	if (data !== null && data._form === key) {
 		this.submitted = true;
 
-		var data = request.data;
-		Object.getOwnPropertyNames(data).forEach(function (key) {
+		Object.keys(data).forEach(function (key) {
 			values[key] = data[key];
-		});
-	}
-	if (Object.keys(request.files).length !== 0) {
-		this.submitted = true;
-		this._files = request.files;
+		});		
+
+		if (Object.keys(request.files).length !== 0) {
+			this._files = request.files;
+		}
 	}
 }, {
 	'getFile': function (key) {
@@ -37,11 +42,10 @@ global.Form = EventEmitter.inherit(function (key, request) {
 	},
 
 	'error': function (key, message) {
-		this._errors[key] = message;
-	},
-
-	'getErrors': function (key) {
-		return (key === undefined) ? this._errors : this._errors[key] || [];
+		if (this._errors[key] === undefined) {
+			this._errors[key] = [];
+		}
+		this._errors[key].push(message);
 	},
 
 	// RENDER
@@ -61,7 +65,7 @@ global.Form = EventEmitter.inherit(function (key, request) {
 		}
 
 		var tag = '<form';
-		Object.getOwnPropertyNames(attrs).forEach(function (key) {
+		Object.keys(attrs).forEach(function (key) {
 			tag += ' ' + key + '="' + attrs[key].replace(/"/g, '\\"') + '"';
 		});
 		tag += '>';
@@ -77,10 +81,13 @@ global.Form = EventEmitter.inherit(function (key, request) {
 		attrs = attrs || {};
 		attrs.name = attrs.name || name;
 		attrs.type = attrs.type || 'text';
-		attrs.value = this[attrs.name] || '';
-		
+		attrs.value = this.values[attrs.name] || '';
+		if (this._errors[name]) {
+			attrs['class'] = attrs['class'] ? attrs['class'] + ' invalid' : 'invalid';
+		}
+
 		var tag = '<input';
-		Object.getOwnPropertyNames(attrs).forEach(function (key) {
+		Object.keys(attrs).forEach(function (key) {
 			tag += ' ' + key + '="' + attrs[key].replace(/"/g, '\\"') + '"';
 		});
 		tag += ' />';
@@ -92,9 +99,12 @@ global.Form = EventEmitter.inherit(function (key, request) {
 		attrs = attrs || {};
 		attrs.name = attrs.name || name;
 		attrs.type = attrs.type || 'file';
+		if (this._errors[name]) {
+			attrs['class'] = attrs['class'] ? attrs['class'] + ' invalid' : 'invalid';
+		}
 
 		var tag = '<input';
-		Object.getOwnPropertyNames(attrs).forEach(function (key) {
+		Object.keys(attrs).forEach(function (key) {
 			tag += ' ' + key + '="' + attrs[key].replace(/"/g, '\\"') + '"';
 		});
 		tag += ' />';
@@ -121,14 +131,30 @@ global.Form = EventEmitter.inherit(function (key, request) {
 		return out.join('');
 	},
 
+	'selectBox': function (name, options, checked_value) {
+		var tag = '<select name="' + name + '">';
+		options.forEach(function (option, o) {
+			tag += '<option value="' + option[0] + '"';
+			if (this[name]) {
+				tag += (this[name] === option[0]) ? ' selected="selected"' : '';
+			} else {
+				tag += ((checked_value === undefined && o === 0) || checked_value === option[0]) ? ' selected="selected"' : '';
+			}
+			tag += '>';
+			tag += option[1];
+			tag += '</option>';
+		}, this.values);
+		tag += '</select>';
+
+		return tag;
+	},
+
 	'submitButton': function (label, attrs) {
 		attrs = attrs || {};
 		attrs.type = 'submit';
-		attrs.name = '_form';
-		attrs.value = this.key;
 
-		var tag = '<button';
-		Object.getOwnPropertyNames(attrs).forEach(function (key) {
+		var tag = '<input type="hidden" name="_form" value="' + this.key + '" /><button';
+		Object.keys(attrs).forEach(function (key) {
 			tag += ' ' + key + '="' + attrs[key].replace(/"/g, '\\"') + '"';
 		});
 		tag += '>';
@@ -145,11 +171,44 @@ global.Form = EventEmitter.inherit(function (key, request) {
 		attrs = attrs || {};
 
 		var tag = '<' + tag_name;
-		Object.getOwnPropertyNames(attrs).forEach(function (key) {
+		Object.keys(attrs).forEach(function (key) {
 			tag += ' ' + key + '="' + attrs[key].replace(/"/g, '\\"') + '"';
 		});
 		tag += '>';
 
 		return tag + error + '</' + tag_name + '>';
-	}
+	},
+
+	'validate': function (rules) {
+		var values = this.values;
+		return rules.every(function (rule) {
+			var key = rule[0];
+			if (key instanceof Array) {
+				return key.every(function (key) {
+					return rule[1].test(values[key]) || (rule[2] !== undefined && this.error(key, rule[2]) && false);
+				}, this);
+			} else {
+				return rule[1].test(values[key]) || (rule[2] !== undefined && this.error(key, rule[2]) && false);
+			}
+		}, this);
+	},
 });
+
+Object.defineProperty(Form.prototype, 'errors', {
+	'get': function () {
+		var errors = [];
+		Object.keys(this._errors).forEach(function (key) {
+			errors = errors.concat(this._errors[key].map(function (err) {
+				return [key, err];
+			}));
+		}, this);
+		return errors;
+	},
+	'set': function (value) {
+	},
+});
+
+Form.PRESENT = /\S+/;
+Form.NUMBER = /^\d+$/;
+Form.NUMBER_FLOAT = /^(\d+(\.\d+)?|\.\d+)$/;
+Form.EMAIL = /^[A-Z0-9\._%\-]+@[A-Z0-9\.\-]+\.[A-Z]{2,4}$/i;
