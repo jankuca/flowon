@@ -164,7 +164,9 @@ global.Controller = Function.inherit(function (request, response, route) {
 			this._response.status = status;
 		}
 
-		this.template._path = Path.join(app._cfg.app_dir, 'templates', this._namespace, this._name, this._view + '.' + this._format + '.ejs');
+		if (!this.template._path) {
+			this.template._path = Path.join(app._cfg.app_dir, 'templates', this._namespace, this._name, this._view + '.' + this._format + '.ejs');
+		}
 		this.template.render(function (error, body) {
 			if (error) {
 				return this.terminate(503, error);
