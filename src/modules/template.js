@@ -8,7 +8,12 @@ global.Template = Function.inherit(function (controller) {
 	this._controller = controller;
 }, {
 	'setLayout': function (name, format) {
-		this._layout_path = name ? Path.join(app._cfg.app_dir, 'templates', this._namespace, '@' + name + '.' + (format || 'html') + '.ejs') : undefined;
+		if (name) {
+			var e = name.split('/');
+			this._layout_path = Path.join(app._cfg.app_dir, 'templates', this._namespace, e.slice(0, e.length - 1).join('/'), '@' + e[e.length - 1] + '.' + (format || 'html') + '.ejs');
+		} else {
+			this._layout_path = undefined;
+		}
 	},
 
 	'render': function (callback) {
