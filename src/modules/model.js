@@ -427,7 +427,7 @@ Model.has_one = function (has_one) {
 		has_one = Array.prototype.slice.call(arguments);
 	}
 
-	has_many.forEach(function (key) {
+	has_one.forEach(function (key) {
 		var name = key.replace(/^\w/, upper);
 		this.prototype['get' + name] = function (callback) {
 			var M = global[name.replace(/ies$/, 'y').replace(/s$/, '')],
