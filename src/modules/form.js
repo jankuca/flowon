@@ -74,7 +74,7 @@ global.Form = EventEmitter.inherit(function (key, request) {
 	},
 
 	'endTag': function () {
-		return '</form>';
+		return '<input type="hidden" name="_form" value="' + this.key + '" /></form>';
 	},
 
 	'textInput': function (name, attrs) {
@@ -153,7 +153,7 @@ global.Form = EventEmitter.inherit(function (key, request) {
 		attrs = attrs || {};
 		attrs.type = 'submit';
 
-		var tag = '<input type="hidden" name="_form" value="' + this.key + '" /><button';
+		var tag = '<button';
 		Object.keys(attrs).forEach(function (key) {
 			tag += ' ' + key + '="' + attrs[key].replace(/"/g, '\\"') + '"';
 		});
