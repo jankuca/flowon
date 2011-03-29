@@ -15,6 +15,9 @@ var app = {
 	'set': function (key, value) {
 		this._cfg[key] = value;
 	},
+	'get': function (key) {
+		return this._cfg[key] || null;
+	},
 	'setDbDriver': function (driver) {
 		if (driver) {
 			this.db_driver = driver;
