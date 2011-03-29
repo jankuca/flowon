@@ -196,9 +196,9 @@ global.Form = EventEmitter.inherit(function (key, request) {
 		return tag + error + '</' + tag_name + '>';
 	},
 
-	'validate': function (rules) {
+	'validate': function (rules, dont_stop) {
 		var values = this.values;
-		return rules.every(function (rule) {
+		return rules[dont_stop ? 'forEach' : 'every'](function (rule) {
 			var key = rule[0];
 			if (key instanceof Array) {
 				return key.every(function (key) {
