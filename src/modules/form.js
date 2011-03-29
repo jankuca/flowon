@@ -95,6 +95,23 @@ global.Form = EventEmitter.inherit(function (key, request) {
 		return tag;
 	},
 
+	'textArea': function (name, attrs) {
+		attrs = attrs || {};
+		attrs.name = attrs.name || name;
+		var value = this.values[attrs.name] || '';
+		if (this._errors[name]) {
+			attrs['class'] = attrs['class'] ? attrs['class'] + ' invalid' : 'invalid';
+		}
+
+		var tag = '<textarea';
+		Object.keys(attrs).forEach(function (key) {
+			tag += ' ' + key + '="' + attrs[key].replace(/"/g, '\\"') + '"';
+		});
+		tag += '>' + value.replace('<', '&lt;').replace('>', '&gt;') + '</textarea>';
+
+		return tag;
+	},
+
 	'fileInput': function (name, attrs) {
 		attrs = attrs || {};
 		attrs.name = attrs.name || name;
