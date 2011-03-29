@@ -3,7 +3,7 @@ exports.helper = function (ncv, params, abs) {
 		len = ncv.length,
 		route = app.router.resolve({
 			'namespace': ncv[len - 3] || null,
-			'controller': ncv[len - 2] || 'default',
+			'controller': ncv[len - 2] || this.controller._name || 'default',
 			'view': ncv[len - 1] || 'default',
 			'params': params
 		}, abs);
