@@ -79,9 +79,10 @@ global.Controller = Function.inherit(function (request, response, route) {
 
 	'link': function (ncv, params, abs) {
 		if (arguments.length === 0) {
+			return this._request.uri;
+		} else if (arguments.length === 1 && typeof arguments[0] === 'boolean') {
 			return this._request.url;
-		}
-		if (arguments.length === 2 && typeof arguments[1] === 'boolean') {
+		} else if (arguments.length === 2 && typeof arguments[1] === 'boolean') {
 			abs = arguments[1];
 			params = undefined;
 		}
