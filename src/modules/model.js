@@ -135,9 +135,12 @@ var Model = global.Model = Function.inherit(function (doc) {
 		}
 
 		var doc = this.doc;
-		Object.getOwnPropertyNames(this).forEach(function (key) {
+		Object.keys(this).forEach(function (key) {
 			if (key.indexOf(':') === -1) {
 				return;
+			}
+			if (this[key] === null || this[key] === undefined) {
+				delete doc[key];
 			}
 			if (doc[key] !== this[key]) {
 				doc[key] = this[key];
