@@ -18,6 +18,10 @@ global.Router = Function.inherit(function () {
 	this._staticNS = [];
 }, {
 	'push': function (pattern, options) {
+		if (!options.controller || !options.view) {
+			throw new Error('Invalid route: ' + pattern);
+		}
+
 		var ns = this.namespace;
 		this._routes.push([
 			ns === '' ? null : ns.substr(1),
