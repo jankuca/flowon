@@ -91,7 +91,7 @@ global.Controller = Function.inherit(function (request, response, route) {
 		var len = ncv.length;
 
 		var uri = app.router.resolve({
-			'namespace': ncv[len - 3] || null,
+			'namespace': ncv[len - 3] || this._namespace || null,
 			'controller': ncv[len - 2] || this._name || 'default',
 			'view': ncv[len - 1] || 'default',
 			'params': params
