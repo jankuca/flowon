@@ -153,7 +153,7 @@ global.Controller = Function.inherit(function (request, response, route) {
 			this._rendered = true;
 		}.bind(this));
 
-		//this.getSession().save();
+		return false; // allow returning Controller#terminate
 	},
 
 	'render': function (status) {
