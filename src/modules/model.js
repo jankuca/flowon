@@ -5,7 +5,7 @@ var upper = function (a) {
 var Model = global.Model = Function.inherit(function (doc) {
 	var d = doc || {};
 	doc = {};
-	Object.getOwnPropertyNames(d).forEach(function (key) {
+	Object.keys(d).forEach(function (key) {
 		Object.defineProperty(doc, key, Object.getOwnPropertyDescriptor(d, key));
 	});
 
@@ -92,7 +92,7 @@ var Model = global.Model = Function.inherit(function (doc) {
 	}
 
 	// fields and child models
-	Object.getOwnPropertyNames(doc).forEach(function (key) {
+	Object.keys(doc).forEach(function (key) {
 		// fields
 		if (key.indexOf(':') !== -1 || key[0] === '_') {
 			this[key] = doc[key];
@@ -167,7 +167,7 @@ var Model = global.Model = Function.inherit(function (doc) {
 				}
 				collection.save(model.doc, { 'insert': !model.stored }, function () {
 					var cache = model._cache;
-					Object.getOwnPropertyNames(cache).forEach(function (key) {
+					Object.keys(cache).forEach(function (key) {
 						var models = cache[key];
 						if (models instanceof Array === false) {
 							models = [models];
@@ -195,7 +195,7 @@ var Model = global.Model = Function.inherit(function (doc) {
 				var cache = parent._cache;
 				var assoc_key,
 					assocs;
-				Object.getOwnPropertyNames(cache).some(function (key) {
+				Object.keys(cache).some(function (key) {
 					var items = cache[key];
 					if (items instanceof Array === false) {
 						items = items ? [items] : [];
