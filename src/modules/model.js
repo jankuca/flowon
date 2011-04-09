@@ -235,10 +235,6 @@ var Model = global.Model = Function.inherit(function (doc) {
 	},
 
 	'updateTimestamp': function (key) {
-		var desc = Object.getOwnPropertyDescriptor(this, key);
-		if (desc === undefined) {
-			throw new Error('Unknown field (' + key + ')');
-		}
 		this[key] = Math.round(new Date().getTime() / 1000);
 	},
 
