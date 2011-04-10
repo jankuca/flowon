@@ -96,11 +96,13 @@ var app = {
 	},
 
 	'_loadModels': function () {
-		FileSystem.readdirSync(Path.join(APP_DIR, 'models')).forEach(function (filename) {
-			if (filename.substring(filename.length - 3) === '.js') {
-				require(Path.join(APP_DIR, 'models', filename));
-			}
-		});
+		try {
+			FileSystem.readdirSync(Path.join(APP_DIR, 'models')).forEach(function (filename) {
+				if (filename.substring(filename.length - 3) === '.js') {
+					require(Path.join(APP_DIR, 'models', filename));
+				}
+			});
+		} catch (exc) {}
 	},
 
 	'_startDb': function (callback) {
