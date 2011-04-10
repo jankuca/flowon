@@ -32,6 +32,13 @@ var Model = global.Model = Function.inherit(function (doc) {
 				_changed = !!value;
 			},
 		},
+		'embedded': {
+			get: function () {
+				return this.constructor.embedded;
+			},
+			set: function () {
+			},
+		},
 		'doc': {
 			value: doc,
 			writable: false,
