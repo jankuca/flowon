@@ -18,7 +18,13 @@ global.Router = Function.inherit(function () {
 	this._staticNS = [];
 }, {
 	'push': function (pattern, options) {
-		if (!options.controller || !options.view) {
+		var is_valid = (options.controller && options.view);
+		if (options.params && options.params instanceof RegExp === false) {
+			is_valid = (is_valid && Object.keys(options.params).every(function (key) {
+				return (options.params[key] instanceof RegExp);
+			}));
+		}
+		if (!is_valid) {
 			throw new Error('Invalid route: ' + pattern);
 		}
 
