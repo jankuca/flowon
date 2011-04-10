@@ -234,8 +234,11 @@ var Model = global.Model = Function.inherit(function (doc) {
 		});
 	},
 
-	'updateTimestamp': function (key) {
-		this[key] = Math.round(new Date().getTime() / 1000);
+	'updateTimestamp': function () {
+		var ts = Math.round(new Date().getTime() / 1000);
+		Array.prototype.forEach.call(arguments, function (key) {
+			this[key] = ts;
+		}, this);
 	},
 
 	'ref': function (m, key) {
