@@ -12,6 +12,12 @@ global.ApiController = global.Controller.inherit(function () {
 		}
 		this._response.end();
 	},
+	'terminate': function (status, message) {
+		this.data = {
+			'error': message || true,
+		};
+		this.render(status);
+	},
 });
 
 JSON.stringifyFormatted = function (input) {
