@@ -141,19 +141,7 @@ var Model = global.Model = Function.inherit(function (doc) {
 			options = {};
 		}
 
-		var doc = this.doc;
-		Object.keys(this).forEach(function (key) {
-			if (key.indexOf(':') === -1) {
-				return;
-			}
-			if (this[key] === null || this[key] === undefined) {
-				delete doc[key];
-			}
-			if (doc[key] !== this[key]) {
-				doc[key] = this[key];
-				this.changed = true;
-			}
-		}, this);
+		this._fillDoc();
 
 		if (!this.changed) {
 			if (typeof callback === 'function') {
@@ -173,19 +161,7 @@ var Model = global.Model = Function.inherit(function (doc) {
 					throw err;
 				}
 				collection.save(model.doc, { 'insert': !model.stored }, function () {
-					var cache = model._cache;
-					Object.keys(cache).forEach(function (key) {
-						var models = cache[key];
-						if (models instanceof Array === false) {
-							models = [models];
-						}
-						models.some(function (m) {
-							if (!m.embedded) {
-								return true;
-							}
-							m.stored = true;
-						});
-					});
+					model._markEmbeddedAsStored();
 
 					if (typeof callback === 'function') {
 						callback();
@@ -214,12 +190,56 @@ var Model = global.Model = Function.inherit(function (doc) {
 					}
 				});
 				if (assocs instanceof Array) {
-					if (assocs.id.toString() === model.id.toString()) {
-						
+					if (!assocs.some(function (assoc, i) {
+						if (assoc.id.toString() === model.id.toString()) {
+							parent.doc[assoc_key][i] = model.doc;
+							parent.save(callback);
+							return true;
+						}
+					})) {
+						throw new Error('Item could not have been saved.');
+					}
+				} else {
+					if (assoc.id.toString() === model.id.toString()) {
+						parent.doc[assoc_key][i] = model.doc;
+						parent.save(callback);
+					} else {
+						throw new Error('Item could not have been saved.');
 					}
 				}
 			});
 		}
+	},
+	
+	'_fillDoc': function () {
+		var doc = this.doc;
+		Object.keys(this).forEach(function (key) {
+			if (key.indexOf(':') === -1) {
+				return;
+			}
+			if (this[key] === null || this[key] === undefined) {
+				delete doc[key];
+			}
+			if (doc[key] !== this[key]) {
+				doc[key] = this[key];
+				this.changed = true;
+			}
+		}, this);
+	},
+	'_markEmbeddedAsStored': function () {
+		var cache = this._cache;
+		Object.keys(cache).forEach(function (key) {
+			var models = cache[key];
+			if (models instanceof Array === false) {
+				models = [models];
+			}
+			models.some(function (m) {
+				if (!m.embedded) {
+					return true;
+				}
+				m.stored = true;
+			});
+		});
 	},
 
 	'remove': function (options, callback) {
