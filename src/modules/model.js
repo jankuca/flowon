@@ -48,12 +48,12 @@ var Model = global.Model = Function.inherit(function (doc) {
 				return doc._id || null;
 			},
 			set: function (value) {
-				if (doc._id !== value) {
+				if (!doc._id || doc._id.toString() !== value.toString()) {
 					if (doc._id) {
 						console.warn('Rewriting an UUID');
 					}
 
-					doc._id = value;
+					doc._id = app.db.pkFactory(value);
 					_changed = true;
 					_stored = false;
 				}
@@ -86,11 +86,6 @@ var Model = global.Model = Function.inherit(function (doc) {
 			set: fieldSetter.bind(this, key),
 		});
 	}, this);
-
-	// id
-	if (this.embedded && !_stored) {
-		this.doc._id = new app.db.pkFactory();
-	}
 
 	// parent
 	if (typeof doc._parent === 'object') {
@@ -142,6 +137,9 @@ var Model = global.Model = Function.inherit(function (doc) {
 		}
 
 		this._fillDoc();
+		if (this.embedded && !this.stored) {
+			this.doc._id = new app.db.pkFactory();
+		}
 
 		if (!this.changed) {
 			if (typeof callback === 'function') {
@@ -162,6 +160,7 @@ var Model = global.Model = Function.inherit(function (doc) {
 				}
 				collection.save(model.doc, { 'insert': !model.stored }, function () {
 					model._markEmbeddedAsStored();
+					model.stored = true;
 
 					if (typeof callback === 'function') {
 						callback();
