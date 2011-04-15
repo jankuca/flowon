@@ -107,23 +107,22 @@ var Model = global.Model = Function.inherit(function (doc) {
 			var cache,
 				M = global[name],
 				embedded = (M !== undefined && M.embedded);
-			if (key[key.length - 1] === 's') {
-				cache = [];
-				(doc[key] instanceof Array ? doc[key] : []).forEach(function (doc) {
-					if (embedded) {
+			if (!embedded) {
+				this._ref[key] = doc[key];
+			} else { // embedded
+				if (key[key.length - 1] === 's') {
+					cache = [];
+					(doc[key] instanceof Array ? doc[key] : []).forEach(function (doc) {
 						var m = new M(doc);
 						m._cache.parent = this;
 						cache.push(m);
-					} else {
-						cache.push(doc);
-					}
-				}, this);
-			} else {
-				cache = new M(doc[key]);
-				cache._cache.parent = this;
+					}, this);
+				} else {
+					cache = new M(doc[key]);
+					cache._cache.parent = this;
+				}
+				this._cache[key] = cache;
 			}
-			this[embedded ? '_cache' : '_ref'][key] = cache;
-			delete doc[key];
 		}
 	}, this);
 }, {
@@ -169,7 +168,7 @@ var Model = global.Model = Function.inherit(function (doc) {
 			});
 		} else {
 			// Embedded objects always have their parent in cache and the parent object has all embedded objects cached as well.
-			// We are going to get all walk through all those embedded objects until we hit the correct association.
+			// We are going to walk through all of those embedded objects until we hit the correct association.
 			this.getParent(function (parent) {
 				if (!parent.stored) {
 					throw new Error('Item is not embedded when it should be.');
@@ -288,7 +287,16 @@ var Model = global.Model = Function.inherit(function (doc) {
 
 		var key = this._getKey(m);
 		this._cacheItem(key, m);
-		this.doc[key] = this._cache[key];
+		var _val;
+		if (this._cache[key] instanceof Array) {
+			_val = [];
+			this._cache[key].forEach(function (m) {
+				_val.push(m.doc);
+			});
+		} else {
+			_val = this._cache[key].doc;
+		}
+		this.doc[key] = _val;
 		this.changed = true;
 	},
 
