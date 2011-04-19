@@ -102,7 +102,11 @@ var app = {
 					require(Path.join(APP_DIR, 'models', filename));
 				}
 			});
-		} catch (exc) {}
+		} catch (exc) {
+			if (exc.code !== 'ENOENT') {
+				throw exc;
+			}
+		}
 	},
 
 	'_startDb': function (callback) {
