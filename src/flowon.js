@@ -60,11 +60,12 @@ var app = {
 		global.APP_DIR = this._cfg.app_dir;
 		global.PUBLIC_DIR = this._cfg.public_dir;
 
+		require('coffee-script');
 		require('./modules/httprequest.js');
 		require('./modules/httpresponse.js');
 		require('./modules/cache.js');
 		require('./modules/template.js');
-		require('./modules/model.js');
+		require('./modules/model.coffee');
 		require('./modules/controller.js');
 		require('./modules/apicontroller.js');
 

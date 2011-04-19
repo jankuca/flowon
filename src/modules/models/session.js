@@ -1,3 +1,2 @@
-var Session = Model.inherit();
-Session.collection = 'sessions';
+var Session = Model.define('session')
 global.Session = Session;
