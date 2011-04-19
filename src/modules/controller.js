@@ -175,7 +175,7 @@ global.Controller = Function.inherit(function (request, response, route) {
 
 			if (this._response.headers['content-type'] === undefined) {
 				var e = this.template._path.split('.');
-				this._setContentTypeHeader();
+				this._setContentTypeHeader(e[e.length - 2]);
 			}
 
 			this._response.write(body);
