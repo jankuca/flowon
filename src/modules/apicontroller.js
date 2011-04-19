@@ -13,9 +13,9 @@ global.ApiController = global.Controller.inherit(function () {
 		this._response.end();
 	},
 	'terminate': function (status, message) {
-		this.data = {
-			'error': message || true,
-		};
+		this.data = message ? {
+			'error': message,
+		} : null;
 		this.render(status);
 	},
 });
