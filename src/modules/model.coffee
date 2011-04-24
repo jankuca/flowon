@@ -121,12 +121,10 @@ Model::save = (callback) ->
 			callback err or null unless typeof callback isnt 'function'
 
 Model::_save = (callback) ->
-	@constructor.collection (err, collection) =>
-		throw err if err
-		collection.save @doc, insert: not @stored, (err) =>			
-			@stored = yes
-			do @_markEmbeddedAsStored
-			callback err unless typeof callback isnt 'function'
+	@constructor.collection().save @doc, insert: not @stored, (err) =>
+		@stored = yes
+		do @_markEmbeddedAsStored
+		callback err unless typeof callback isnt 'function'
 
 Model::_saveEmbedded = (callback) ->
 	@getParent (parent) =>
@@ -189,8 +187,7 @@ Model::updateTimestamp = (keys...) ->
 	, this
 
 # -- static --
-Model.collection = (callback) ->
-	app.db.collection (plural @key), callback
+Model.collection = -> app.db.collection (plural @key)
 
 Model.define = (key, constructor, prototype) ->
 	M = @inherit constructor, prototype
@@ -287,43 +284,35 @@ Model.all = (selector, options, callback) ->
 Model._consolidateSelector = (selector) ->
 	if typeof selector isnt 'object'
 		return _id: app.db.pkFactory selector
-	else if selector._id isnt undefined
-		selector._id = app.db.pkFactory selector._id
 	return selector
 
 Model._all = (selector, options, callback) ->
-	@collection (err, collection) =>
-		throw err if err
-		collection.find selector, options, (err, docs) =>
-			throw err if err
-			docs.toArray (err, docs) =>
-				return callback new this docs[0] if options.limit is 1
-				callback docs.map (doc) ->
-					new this doc
-				, this
+	cur = @collection().find selector, options
+	cur.toArray (err, docs) =>
+		return callback new this docs[0] if options.limit is 1
+		callback docs.map (doc) ->
+			new this doc
+		, this
 
 Model._allEmbedded = (selector, options, callback) ->
 	ParentModel = global[ucFirst @_parent_key]
 	embeds_one = typeof ParentModel.prototype['get' + ucFirst @key] is 'function'
 	sel = @_embedSelector selector, if embeds_one then @key else plural @key
 
-	ParentModel.collection (err, collection) =>
-		throw err if err
-		one = options.limit is 1
-		collection.find sel, options, (err, docs) =>
-			throw err if err
-			docs.toArray (err, docs) =>
-				if embeds_one
-					return callback new this if docs.length is 0
-					callback do (new ParentModel docs[0])['get' + ucFirst @key]
-				else
-					res = []
-					docs.forEach (doc) ->
-						children = do (new ParentModel doc)['get' + ucFirst plural @key]
-						res = res.concat children.filter (child) => @_matchSelector selector, child
-					, this
-					return callback res[0] or new this if one
-					callback res
+	one = options.limit is 1
+	cur = ParentModel.collection().find sel, options
+	cur.toArray (err, docs) =>
+		if embeds_one
+			return callback new this if docs.length is 0
+			callback do (new ParentModel docs[0])['get' + ucFirst @key]
+		else
+			res = []
+			docs.forEach (doc) ->
+				children = do (new ParentModel doc)['get' + ucFirst plural @key]
+				res = res.concat children.filter (child) => @_matchSelector selector, child
+			, this
+			return callback res[0] or new this if one
+			callback res
 
 Model._embedSelector = (selector, ns_key) ->
 	sel = {}
