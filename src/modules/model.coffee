@@ -207,6 +207,8 @@ Model.has_one = (assocs...) ->
 
 Model.has_many = (assocs...) ->
 	assocs.forEach (assoc) ->
+		key = if assoc instanceof Array then assoc[1] else assoc
+		assoc = if assoc instanceof Array then assoc[0] else assoc		
 		this['get' + ucFirst assoc] = (selector, options, callback) ->
 			if arguments.length is 2 and typeof arguments[1] is 'function'
 				callback = arguments[1]
@@ -216,8 +218,8 @@ Model.has_many = (assocs...) ->
 				options = {}
 			selector = {} unless arguments.length is 3
 
-			selector._id = $in: @_ref[assoc]
-			global[ucFirst singular assoc].all selector, options, callback
+			selector._id = $in: @_ref[key]
+			global[ucFirst singular key].all selector, options, callback
 	, @prototype
 
 Model.embeds_one = (assocs...) ->
