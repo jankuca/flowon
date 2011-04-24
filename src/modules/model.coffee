@@ -348,28 +348,86 @@ Model._matchSelector = (selector, child) ->
 		else
 			val.some (sel) => @_matchSelector sel, child
 
-###
-Model._matchSelector = (selector, child) ->
-	Object.keys(selector).every (key) =>
-		rule = selector[key]
-		if key is '$or'
-			rule.every (rule) => @_matchSelectorRule rule, child
-		else
-			@_matchSelectorRule rule, child
 
-Model._matchSelectorRule = (rule, child) ->
-	doc = child.doc
-	if typeof rule isnt 'object'
-		return do rule.toString is child.id if key is '_id'
-		return rule is doc[key]
-	Object.keys(rule).every (op) ->
-		switch op.substr 1
-			when 'in' then rule[op].indexOf(doc[key]) isnt -1
-			when 'nin' then rule[op].indexOf(doc[key]) is -1
-			when 'exists'
-				if Boolean rule[op]
-					typeof doc[key] isnt 'undefined' and doc[key] isnt null
-				else
-					typeof doc[key] is 'undefined' or doc[key] is null
+Model.searchable = ->
+	@_search_chains = [] if not @_search_chains
+	@_search_chains.push Array.prototype.slice.call arguments
 
-###
+Model.search = (selector, q, callback) ->
+	throw new Error('This model is not searchable.') if @_search_chains is undefined
+	results = []
+	i = 0
+	ii = @_search_chains.length
+	do =>
+		fn = arguments.callee.caller
+		search_chain = @_search_chains[i++]
+		@_createSearchIndex selector, search_chain, (err, result) =>
+			throw err if err
+			@_createRelevancyIndex result.documents[0].result, q, (err, result) =>
+				throw err if err
+				cur = app.db.collection(result.documents[0].result).find()
+				cur.sort('value', 'desc').limit(20).toArray (err, docs) =>					
+					ids = docs.map (doc) -> doc._id
+					rel = @_createRelevancySheet docs
+					@all _id: $in: ids, (topics) ->
+						results = results.concat topics.sort (a, b) -> rel[a.id] < rel[b.id]
+						return fn() unless i is ii
+						callback results
+
+Model._createSearchIndex = (selector, search_chain, callback) ->
+	if arguments.length is 1
+		callback = arguments[0]
+		selector = {}
+
+	command =
+		mapreduce: plural @key
+		query: selector
+		map: """function () {
+			var words = [], i, ii;
+			try {
+				this['#{search_chain[0]}'].forEach(function (doc) {
+					if (doc.length !== void 0) {
+						words = words.concat(doc);
+					} else {
+						words = words.concat(doc['#{search_chain[1]}'] || []);
+					}
+				});
+			} catch (err) {
+				words = [];
+			}
+			for (i = 0, ii = words.length; i < ii; ++i) {
+				emit(words[i].toLowerCase(), { docs: [this._id] });
+			}
+		}"""
+		reduce: """function (key, values) {
+			var docs = [];
+			values.forEach(function (value) {
+				docs = docs.concat(value.docs);
+			});
+			return { docs: docs };
+		}"""
+	app.db.executeDbCommand command, callback
+
+Model._createRelevancyIndex = (mapreduce, q, callback) ->
+	command =
+		mapreduce: mapreduce
+		query:
+			_id: $in: q
+		map: """function () {
+			for (var i = 0, ii = this.value.docs.length; i < ii; ++i) {
+				emit(this.value.docs[i], 1);
+			}
+		}"""
+		reduce: """function (key, values) {
+			var sum = 0;
+			values.forEach(function (value) {
+				sum += value;
+			});
+			return sum;
+		}"""
+	app.db.executeDbCommand command, callback
+
+Model._createRelevancySheet = (docs) ->
+	sheet = {}
+	docs.forEach (doc) -> sheet[doc._id.toString()] = doc.value
+	return sheet
