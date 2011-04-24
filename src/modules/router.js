@@ -1,4 +1,4 @@
-global.Router = Function.inherit(function () {
+var Router = module.exports.Router = Function.inherit(function () {
 	var _namespace = '';
 	Object.defineProperty(this, 'namespace', {
 		'get': function () {
@@ -38,25 +38,18 @@ global.Router = Function.inherit(function () {
 	'pushStaticNamespace': function (ns) {
 		this._staticNS.push(ns);
 	},
-	'match': function (uri, qs) {
+	'match': function (url) {
 		var routes = this._routes,
-			query = {},
+			pathname = url.pathname,
+			query = url.query,
 			result = null;
 
 		if (this._staticNS.some(function (ns) {
-			if (uri === '/' + ns || (new RegExp('^/' + ns + '/')).test(uri)) {
+			if (pathname === '/' + ns || (new RegExp('^/' + ns + '/')).test(pathname)) {
 				return true;
 			}
 		})) {
 			return result;
-		}
-
-		if (!!qs) {
-			var parts = qs.split('&');
-			parts.forEach(function (part) {
-				part = part.split('=');
-				query[part[0]] = decodeURIComponent(part[1]);
-			});
 		}
 
 		routes.some(function (route) {
@@ -83,7 +76,7 @@ global.Router = Function.inherit(function () {
 				});
 			}
 
-			match = new RegExp('^' + pattern + '\\/?$').exec(uri);
+			match = new RegExp('^' + pattern + '\\/?$').exec(pathname);
 			if (match === null) {
 				return;
 			}
@@ -132,7 +125,7 @@ global.Router = Function.inherit(function () {
 			}
 
 			// query string
-			if (!!qs) {
+			if (Boolean(url.search)) {
 				if (rules instanceof RegExp) {
 					if (Object.getOwnPropertyNames(query).some(function (key) {
 						if (!rules.test(query[key])) {

@@ -6,7 +6,7 @@ var Path = require('path'),
 	Base64 = require('base64/base64.js').Base64,
 	RelativeDate = require('relativedate/relativedate.js');
 
-var Cache = global.Cache = Function.inherit(function (namespace, key) {
+var Cache = module.exports.Cache = Function.inherit(function (namespace, key) {
 	this.namespace = namespace;
 	this.key = key;
 });

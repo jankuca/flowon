@@ -4,7 +4,7 @@ plural = (str) -> str.replace(/y$/, 'ies').replace(/[^s]$/, (a) -> a + 's')
 ucFirst = (str) -> str.replace /^\w/, (w) -> do w.toUpperCase
 
 # == module ==
-Model = global.Model = Function.inherit (doc) ->
+Model = module.exports.Model = Function.inherit (doc) ->
 	@doc = doc or {}
 	@stored = Boolean @doc._id
 	@deleted = Boolean @doc['date:deleted']

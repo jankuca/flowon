@@ -4,7 +4,7 @@ var Path = require('path'),
 	FileSystem = require('fs'),
 	EJS = require('ejs/ejs.js').EJS;
 
-global.Template = Function.inherit(function (controller) {
+var Template = module.exports.Template = Function.inherit(function (controller) {
 	this._controller = controller;
 }, {
 	'setLayout': function (name, format) {
@@ -16,16 +16,23 @@ global.Template = Function.inherit(function (controller) {
 		}
 	},
 
+	'getPath': function () {
+		return this._path;
+	},
+	'setPath': function (path) {
+		this._path = path;
+	},
+
 	'render': function (callback) {
 		if (!this._path) {
-			return callback('No template file path specified');
+			return callback(new Error('No template file path specified'));
 		}
 
 		var template = this;
 
 		FileSystem.stat(template._path, function (error, stats) {
 			if (error || !stats.isFile()) {
-				return callback('Missing template: ' + template._path);
+				return callback(new Error('Missing template: ' + template._path));
 			}
 				
 			// Check the cache
@@ -39,7 +46,7 @@ global.Template = Function.inherit(function (controller) {
 					try {
 						html = ejs.render(template);
 					} catch (exc) {
-						return callback('Template error: ' + exc.message);
+						return callback(exc);
 					}
 
 					if (!template._layout_path) {
@@ -72,7 +79,7 @@ global.Template = Function.inherit(function (controller) {
 						html = ejs.render(template);
 						Cache.set('ejs_compiled', template._path, ejs.out());
 					} catch (exc) {
-						callback('Template error: ' + exc.message);
+						callback(exc);
 						return;
 					}
 

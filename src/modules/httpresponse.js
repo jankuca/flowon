@@ -2,7 +2,7 @@
 
 var RelativeDate = require('relativedate/relativedate.js');
 
-global.HttpResponse = Function.inherit(function (response) {
+var HttpResponse = module.exports.HttpResponse = Function.inherit(function (response) {
 	this._head_sent = false;
 	this._body_sent = false;
 

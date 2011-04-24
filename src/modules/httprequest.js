@@ -4,21 +4,15 @@ var QueryString = require('querystring'),
 	Url = require('url'),
 	Formidable = require('node-formidable/lib/formidable/index');
 
-global.HttpRequest = require('events').EventEmitter.inherit(function (request) {
+var HttpRequest = module.exports.HttpRequest = require('events').EventEmitter.inherit(function (request) {
 	this.request = request;
 	this.host = request.headers.host;
-	var query = Url.parse(request.url).query;
-	this.uri = Url.parse(request.url).pathname + (query ? '?' + query : '');
-	this.url = 'http://' + this.host + this.uri;
+	this.url = Url.parse('http://' + this.host + request.url, true);
+	this.abs_url = 'http://' + this.host + this.url.pathname + this.url.search;
 	this.method = request.method;
 	this.headers = request.headers;
 	this.ip = request.headers['x-forwarded-for'] || request.connection.remoteAddress;
 	this.ready = false;
-
-	Object.defineProperty(this, 'ajax', {
-		'value': (request.headers['x-requested-with'] && request.headers['x-requested-with'] === 'XMLHttpRequest'),
-		'writable': false,
-	});
 
 	var _r = this,
 		cookie_header = request.headers.cookie,
@@ -94,5 +88,9 @@ global.HttpRequest = require('events').EventEmitter.inherit(function (request) {
 		if (type === 'ready' && this.ready) {
 			this.emit('ready');
 		}
+	},
+
+	'getHeader': function (key) {
+		return this.headers[key] || null;
 	},
 });

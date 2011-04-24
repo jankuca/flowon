@@ -2,14 +2,14 @@
 
 var EventEmitter = require('events').EventEmitter;
 
-global.Form = EventEmitter.inherit(function (key, request) {
+var Form = module.exports.Form = EventEmitter.inherit(function (key, request) {
 	this.key = key;
 	this._request = request;
 	this._errors = {};
 	this._files = {};
 	this.submitted = false;
 
-	this.action = request.uri;
+	this.action = request.url.pathname + request.url.search;
 	this.method = 'post';
 	
 	var values = {};
