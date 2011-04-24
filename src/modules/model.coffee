@@ -118,7 +118,7 @@ Model::save = (callback) ->
 		@beforeSave?()
 		this[if not @embedded then '_save' else '_saveEmbedded'] (err) =>
 			@deleted = Boolean @doc['date:deleted']
-			callback err or null
+			callback err or null unless typeof callback isnt 'function'
 
 Model::_save = (callback) ->
 	@constructor.collection (err, collection) =>
