@@ -68,6 +68,8 @@ Model::_exportDoc = ->
 		this[key] = doc[key] unless key.indexOf(':') is -1
 	, this
 
+Model::getObjectId = -> @doc._id || null
+
 Model::_fillDoc = ->
 	do @_applyRef
 	do @_applyCache
