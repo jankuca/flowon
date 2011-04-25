@@ -361,11 +361,11 @@ Model.search = (selector, q, callback) ->
 	do =>
 		fn = arguments.callee.caller
 		search_chain = @_search_chains[i++]
-		@_createSearchIndex selector, search_chain, (err, result) =>
+		tmp1 = @_createSearchIndex selector, search_chain, (err, result) =>
 			throw err if err
-			@_createRelevancyIndex result.documents[0].result, q, (err, result) =>
+			tmp2 = @_createRelevancyIndex tmp1, q, (err, result) =>
 				throw err if err
-				cur = app.db.collection(result.documents[0].result).find()
+				cur = app.db.collection(tmp2).find()
 				cur.sort('value', 'desc').limit(20).toArray (err, docs) =>					
 					ids = docs.map (doc) -> doc._id
 					rel = @_createRelevancySheet docs
@@ -379,9 +379,11 @@ Model._createSearchIndex = (selector, search_chain, callback) ->
 		callback = arguments[0]
 		selector = {}
 
+	tmp_collection = 'tmp.mr.mapreduce_' + (new Date().getTime()) + '_' + Math.round(Math.random() * 1000)
 	command =
 		mapreduce: plural @key
 		query: selector
+		out: tmp_collection
 		map: """function () {
 			var words = [], i, ii;
 			try {
@@ -407,12 +409,15 @@ Model._createSearchIndex = (selector, search_chain, callback) ->
 			return { docs: docs };
 		}"""
 	app.db.executeDbCommand command, callback
+	return tmp_collection
 
 Model._createRelevancyIndex = (mapreduce, q, callback) ->
+	tmp_collection = 'tmp.mr.mapreduce_' + (new Date().getTime()) + '_' + Math.round(Math.random() * 1000)
 	command =
 		mapreduce: mapreduce
 		query:
 			_id: $in: q
+		out: tmp_collection
 		map: """function () {
 			for (var i = 0, ii = this.value.docs.length; i < ii; ++i) {
 				emit(this.value.docs[i], 1);
@@ -426,6 +431,7 @@ Model._createRelevancyIndex = (mapreduce, q, callback) ->
 			return sum;
 		}"""
 	app.db.executeDbCommand command, callback
+	return tmp_collection
 
 Model._createRelevancySheet = (docs) ->
 	sheet = {}
