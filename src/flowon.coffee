@@ -236,9 +236,7 @@ ContentServer.getHeadersByExtension = (ext) ->
 	if headers.expires is false
 		delete headers.expires
 	else
-		date = do new Date
-		date.setFullYear date.getFullYear() + 1
-		headers.expires = date.toUTCString()
+		headers['cache-control'] = 'public, must-revalidate'
 	
 	return headers
 
@@ -246,10 +244,13 @@ ContentServer.getHeadersByExtension = (ext) ->
 ContentServer.headers =
 	'.html':
 		'content-type': 'text/html; charset=UTF-8'
+		expires: false
 	'.js':
 		'content-type': 'text/javascript; charset=UTF-8'
+		expires: false
 	'.css':
 		'content-type': 'text/css; charset=UTF-8'
+		expires: false
 	'.manifest':
 		'content-type': 'text/cache-manifest; charset=UTF-8'
 		expires: false
