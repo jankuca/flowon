@@ -30,7 +30,12 @@ JSON.stringifySorted = (input) ->
 		switch typeof input
 			when 'undefined' then output += 'null'
 			when 'string' then output += '"' + input + '"'
-			when 'number', 'boolean' then output += input
+			when 'number'
+				if isNaN input
+					output += 'null'
+				else
+					output += input
+			when 'boolean' then output += input
 			when 'object'
 				output += '{'
 				output += Object.keys(input).sort().map((key) -> '"' + key + '":' + JSON.stringifySorted input[key]).join ','
