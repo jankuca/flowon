@@ -192,6 +192,7 @@ Model.collection = -> app.db.collection (plural @key)
 Model.define = (key, constructor, prototype) ->
 	M = @inherit constructor, prototype
 	M.key = key
+	M.prototype.key = key
 	return M
 
 Model.has_one = (assocs...) ->
@@ -244,7 +245,7 @@ Model.belongs_to = (key) ->
 	@prototype.getParent = (callback) ->
 		has_one = typeof global[ucFirst @constructor._parent_key].prototype['get' + ucFirst @key] is 'function'
 		selector = {}
-		selector[if has_one then @key else plural @key] = @id
+		selector[if has_one then @key else plural @key] = @getObjectId()
 		global[ucFirst @constructor._parent_key].one selector, callback
 
 Model.embedded_in = (key) ->
