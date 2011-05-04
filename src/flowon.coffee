@@ -20,6 +20,8 @@ URL = require 'url'
 Path = require 'path'
 FS = require 'fs'
 
+spawn = require('child_process').spawn
+
 global.app =
 	get: (key) -> @_cfg[key] or null
 	set: (key, value) -> @_cfg[key] = value
@@ -179,8 +181,16 @@ ContentServer::_logRequest = (static) ->
 	url = "#{request.url.pathname}#{request.url.search}"
 	console.log "[#{ts}][#{request.ip}] #{request.method} #{url}#{if @route is null then ' --> static' else ''}"
 
-ContentServer::_readStaticFile = (error_callback) ->
+ContentServer::_readStaticFile = (unfiltered, error_callback) ->
+	if arguments.length is 1 and typeof arguments[0] is 'function'
+		error_callback = arguments[0]
+		unfiltered = no
+
 	path = Path.join PUBLIC_DIR, @pathname
+	# filtered
+	if not unfiltered
+		return @_coffeeToJS path, error_callback if path.split('.').slice(-2).join('.') is 'coffee.js'
+	# static
 	Path.exists path, (exists) =>
 		return do error_callback if not exists unless typeof error_callback isnt 'function'
 		return @terminate 404 if not exists
@@ -188,6 +198,29 @@ ContentServer::_readStaticFile = (error_callback) ->
 		FS.readFile path, 'binary', (err, data) =>
 			return @_handleStaticError err if err
 			@_returnStaticData data
+
+ContentServer::_coffeeToJS = (path, error_callback) ->
+	src_path = path.replace(/\.coffee\.js$/, '.coffee')
+	Cache.get 'coffee2js', path, (cache) =>
+		FS.stat src_path, (err, src_stat) =>
+			return do error_callback if err unless typeof error_callback isnt 'function'
+			return @terminate 404 if err
+			return @_returnStaticData cache.data if cache and cache.created > Math.round(src_stat.ctime.getTime() / 1000)
+
+			data = ''
+			error = no
+			ch = spawn 'coffee', ['-c', '-p', src_path]
+			ch.stdout.on 'data', (chunk) -> data += chunk
+			ch.stdout.on 'end', =>
+				if not error
+					Cache.set 'coffee2js', path, data
+					@_returnStaticData data
+			ch.stderr.on 'data', (data) =>
+				error = yes
+				data = data.toString()
+				err = new Error data.match(/,\s(.*)/)[1]
+				err.stack = data
+				@terminate 503, err
 
 ContentServer::_handleStaticError = (err) ->
 	switch err.errno
