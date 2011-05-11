@@ -40,7 +40,7 @@ Model::_createTree = ->
 
 	_handleChild = (item, ChildModel) =>
 		return app.db.pkFactory item if typeof item is 'string'
-		return item if not ChildModel.embedded # item instanceof ObjectId
+		return item if ChildModel is undefined or not ChildModel.embedded # item instanceof ObjectId
 
 		child = new ChildModel item
 		child._cache._parent = this
@@ -52,11 +52,13 @@ Model::_createTree = ->
 		items = doc[key]
 		if items instanceof Array
 			ChildModel = global[ucFirst singular key]
-			child = items.map (item) -> _handleChild item, ChildModel unless ChildModel is undefined
+			child = items.map (item) -> _handleChild item, ChildModel
 		else
 			ChildModel = global[ucFirst key]
-			child = _handleChild items, ChildModel unless ChildModel is undefined
-		this[if ChildModel.embedded then '_cache' else '_ref'][key] = child unless ChildModel is undefined
+			child = _handleChild items, ChildModel
+
+		storage = if ChildModel isnt undefined and ChildModel.embedded then '_cache' else '_ref'
+		this[storage][key] = child unless child is undefined
 	, this
 
 Model::_doesHandle = (key) ->
