@@ -45,7 +45,9 @@ Controller::header = (key, value) ->
 	@_response.setHeader key, value
 
 Controller::getSession = -> @_session or null
-Controller::setSession = (session) -> @_session = session or null
+Controller::setSession = (session) ->
+	@_response.setCookie 'FLOWONSESSID', session.id, app.get 'session_expiration', ".#{@_request.hostname}", false, true
+	@_session = session or null
 
 Controller::setMaxExecutionTimeout = (delay) ->
 	@_max_execution_timeout = setTimeout =>

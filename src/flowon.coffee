@@ -149,7 +149,6 @@ ContentServer::_prepareController = (Controller) ->
 	return do @_startupController if app.db is undefined
 	@_prepareSession (session) =>
 		c.setSession session
-		@response.setCookie 'FLOWONSESSID', session.id, app.get 'session_expiration', ".#{@request.hostname}", false, true
 		do @_startupController
 
 ContentServer::_prepareSession = (callback) ->
