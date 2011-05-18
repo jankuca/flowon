@@ -299,6 +299,7 @@ Model.all = (selector, options, callback) ->
 		selector = {}
 	throw new Error 'Missing callback' if typeof callback isnt 'function'
 
+	options.sort = @sort unless options.sort isnt undefined or @sort is undefined
 	try
 		selector = @_consolidateSelector selector
 	catch err
@@ -315,6 +316,7 @@ Model._consolidateSelector = (selector) ->
 
 Model._all = (selector, options, callback) ->
 	cur = @collection().find selector, options
+	cur.sort options.sort if options.sort
 	cur.toArray (err, docs) =>
 		return callback new this docs[0] if options.limit is 1
 		callback docs.map (doc) ->
