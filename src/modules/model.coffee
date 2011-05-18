@@ -166,13 +166,32 @@ Model::ref = (child, key) ->
 
 	key ?= @_getChildAssoc child
 	if @_doesHandle key # has one
-		@changed = yes
 		@_ref[key] = app.db.pkFactory child.id
-	else if @_doesHandle plural key # has many
 		@changed = yes
-		ref = @_ref[plural key] or []
-		ref.push app.db.pkFactory child.id
-		@_ref[plural key] = ref
+	else if @_doesHandle plural key # has many
+		id = child.id
+		refs = @_ref[plural key] or []
+		if refs.every((ref) -> ref.toString() isnt id)
+			refs.push app.db.pkFactory id
+		@_ref[plural key] = refs
+		@changed = yes
+	else
+		throw new Error "No association '#{key}', nor '#{plural key}'"
+
+Model::unref = (child, key) ->
+	throw new Error 'Only models can be referenced.' if not child instanceof Model
+	throw new Error 'Only stored models can be referenced.' if not child.stored
+
+	key ?= @_getChildAssoc child
+	if @_doesHandle key # has_one
+		if @_ref[key].id is child.id
+			@_ref[key] = undefined
+			@changed = yes
+	else if @_doesHandle plural key
+		id = child.id
+		@_ref[plural key] = (@_ref[plural key] or []).filter (ref) -> ref.toString() isnt id
+	else
+		throw new Error "No association '#{key}', nor '#{plural key}'"
 
 Model::_getChildAssoc = (child) ->
 	ChildModel = null
