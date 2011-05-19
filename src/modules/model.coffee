@@ -304,7 +304,7 @@ Model.all = (selector, options, callback) ->
 		selector = @_consolidateSelector selector
 	catch err
 		return callback if options.limit isnt 1 then [] else do new this
-	selector.$or = [ ('date:deleted': $exists: no), 'date:deleted': 0 ] unless selector['date:deleted'] isnt undefined or options.deleted
+	selector['date:deleted'] = ($exists: no) unless selector['date:deleted'] isnt undefined or options.deleted
 
 	return @_allEmbedded selector, options, callback if @embedded
 	@_all selector, options, callback
