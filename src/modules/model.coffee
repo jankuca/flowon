@@ -189,7 +189,9 @@ Model::unref = (child, key) ->
 			@changed = yes
 	else if @_doesHandle plural key
 		id = child.id
+		len = @_ref[plural key]
 		@_ref[plural key] = (@_ref[plural key] or []).filter (ref) -> ref.toString() isnt id
+		@changed = yes unless @_ref[plural key] is len
 	else
 		throw new Error "No association '#{key}', nor '#{plural key}'"
 
