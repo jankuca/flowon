@@ -206,7 +206,7 @@ Model::_getChildAssoc = (child) ->
 Model::updateTimestamp = (keys...) ->
 	ts = Math.round new Date().getTime() / 1000
 	keys.forEach (key) ->
-		@doc[key] = ts
+		this[key] = ts
 	, this
 
 # -- static --
