@@ -57,14 +57,19 @@ global.app =
 	_startDB: (callback) ->
 		type = @get 'db_type'
 		driver = @get 'db_driver'
-		console.warn '-- Warning: Starting without a database.' if type is null
+
+		if type is null or driver is null
+			console.warn '-- Warning: Starting without a database.'
+			do callback unless typeof callback isnt 'function'
+			return
+
 		return console.error '-- Error: No database driver' if driver is null
-		console.info "-- Info: Using the '#{@get 'db_type'}' database driver." unless not type
+		console.info "-- Info: Using the '#{@get 'db_type'}' database driver."
 
 		switch type
 			when 'mongodb' then @_startDb_mongodb callback
-			else do callback unless callback isnt 'function'
-	
+			else do callback unless typeof callback isnt 'function'
+
 	_startDb_mongodb: (callback) ->
 		driver = @get 'db_driver'
 		@db = new driver.Db (@get 'db_name'),
