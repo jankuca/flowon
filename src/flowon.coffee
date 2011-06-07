@@ -222,7 +222,7 @@ ContentServer::_coffeeToJS = (path, error_callback) ->
 			ch.stderr.on 'data', (data) =>
 				error = yes
 				data = data.toString()
-				err = new Error data
+				err = new Error data.match(/,\s(.*)/)[1]
 				err.stack = data
 				@terminate 503, err
 
