@@ -53,7 +53,7 @@ var Router = module.exports.Router = Function.inherit(function () {
 		}
 
 		routes.some(function (route) {
-			var pattern = route[1].replace(/\//g, '\\/'),
+			var pattern = route[1].replace(/\/$/, '').replace(/\//g, '\\/'),
 				placeholders = pattern.match(/:_?[a-z][\w\-]*/g),
 				match,
 				options = {},
