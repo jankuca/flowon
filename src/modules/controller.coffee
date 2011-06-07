@@ -24,7 +24,9 @@ Object.defineProperties Controller.prototype,
 
 Controller::_prepareTemplate = ->
 	@template = new Template this
-	@template.setLayout 'layout'
+
+	ns = @_route.namespace unless not @_route
+	@template.setLayout if ns then "#{ns}/layout" else 'layout'
 
 	@template.base_uri = app.get 'base_uri'
 	@template.browser = @_request.browser
