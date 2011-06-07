@@ -4,6 +4,7 @@ module.exports.Controller = Controller = global.Controller.inherit ->
 Controller::render = (status) ->
 	status = Number status
 	@_response.status = status unless isNaN status
+	@header 'cache-control', 'no-cache'
 	if @output
 		@header 'content-type', 'application/json; charset=UTF-8'
 		@_response.write JSON.stringifyFormatted @output
