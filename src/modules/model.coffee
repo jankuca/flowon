@@ -110,6 +110,12 @@ Model::_applyCache = ->
 			doc[key] = child.doc
 	, this
 
+Model::update = (values) ->
+	Object.keys(values).forEach (key) ->
+		return if key.indexOf(':') is -1
+		this[key] = values[key]
+	, this
+
 Model::save = (callback) ->
 	do @_fillDoc
 	@id = new app.db.pkFactory() if not @id
