@@ -132,6 +132,10 @@ var Form = module.exports.Form = EventEmitter.inherit(function (key, request) {
 	'radioList': function (name, options, item_tag_name, checked_value) {
 		var out = [];
 		options.forEach(function (option, o) {
+			if (option instanceof Array === false) {
+				option = [option, option];
+			}
+
 			var tag = '<' + (item_tag_name || 'p') + '>';
 			tag += '<label>';
 			tag += '<input type="radio" name="' + name + '" value="' + option[0] + '"';
@@ -151,6 +155,10 @@ var Form = module.exports.Form = EventEmitter.inherit(function (key, request) {
 	'selectBox': function (name, options, checked_value) {
 		var tag = '<select name="' + name + '">';
 		options.forEach(function (option, o) {
+			if (option instanceof Array === false) {
+				option = [option, option];
+			}
+
 			tag += '<option value="' + option[0] + '"';
 			if (this[name]) {
 				tag += (this[name] === option[0]) ? ' selected="selected"' : '';
