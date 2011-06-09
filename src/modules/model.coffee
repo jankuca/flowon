@@ -326,6 +326,8 @@ Model._all = (selector, options, callback) ->
 	cur = @collection().find selector, options
 	cur.sort options.sort if options.sort
 	cur.toArray (err, docs) =>
+		throw err if err
+
 		return callback new this docs[0] if options.limit is 1
 		callback docs.map (doc) ->
 			new this doc
@@ -339,6 +341,8 @@ Model._allEmbedded = (selector, options, callback) ->
 	one = options.limit is 1
 	cur = ParentModel.collection().find sel, options
 	cur.toArray (err, docs) =>
+		throw err if err
+
 		if embeds_one
 			return callback new this if docs.length is 0
 			callback do (new ParentModel docs[0])['get' + ucFirst @key]
