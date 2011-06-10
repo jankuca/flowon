@@ -16,7 +16,7 @@ var HttpRequest = module.exports.HttpRequest = require('events').EventEmitter.in
 
 	var _r = this,
 		cookie_header = request.headers.cookie,
-		ua_header = request.headers['user-agent'],
+		ua_header = request.headers['user-agent'] || '',
 		fields = (cookie_header !== undefined) ? cookie_header.split(/;\s?/) : [],
 		field,
 		match;
