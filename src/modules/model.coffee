@@ -325,6 +325,8 @@ Model._consolidateSelector = (selector) ->
 Model._all = (selector, options, callback) ->
 	cur = @collection().find selector, options
 	cur.sort options.sort if options.sort
+	cur.limit options.limit if options.limit
+	cur.skip options.skip if options.skip
 	cur.toArray (err, docs) =>
 		if err
 			console.log selector
