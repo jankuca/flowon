@@ -231,7 +231,9 @@ Model.has_one = (assocs...) ->
 				callback = arguments[0]
 				options = {}
 
-			selector = _id: @_ref[assoc]
+			id = @_ref[assoc]
+			return callback new global[ucFirst assoc] if not id
+			selector = _id: id
 			global[ucFirst assoc].one selector, options, callback
 	, @prototype
 
@@ -248,7 +250,9 @@ Model.has_many = (assocs...) ->
 				options = {}
 			selector = {} unless arguments.length is 3
 
-			selector._id = $in: @_ref[key]
+			ids = @_ref[key]
+			return callback [] if not ids or ids.length is 0
+			selector._id = $in: ids
 			global[ucFirst singular key].all selector, options, callback
 	, @prototype
 
