@@ -31,6 +31,7 @@ Controller::_prepareTemplate = ->
 	@template.base_uri = app.get 'base_uri'
 	@template.browser = @_request.browser
 	@template.route = @_route
+	@template.params = @_route.params unless not @_route
 
 Controller::view = ->
 	view = @_route.view
