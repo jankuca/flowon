@@ -88,6 +88,28 @@ var Form = module.exports.Form = EventEmitter.inherit(function (key, request) {
 
 		var tag = '<input';
 		Object.keys(attrs).forEach(function (key) {
+			if (typeof attrs[key] !== 'object' && typeof attrs[key] !== 'boolean') {
+				tag += ' ' + key + '="' + attrs[key].replace(/"/g, '\\"') + '"';
+			}
+		});
+		tag += ' />';
+
+		return tag;
+	},
+
+	'checkBox': function (name, attrs) {
+		attrs = attrs || {};
+		attrs.name = attrs.name || name;
+		attrs.type = 'checkbox';
+		if (this.values[attrs.name]) {
+			attrs.checked = 'checked';
+		}
+		if (this._errors[name]) {
+			attrs['class'] = attrs['class'] ? attrs['class'] + ' invalid' : 'invalid';
+		}
+
+		var tag = '<input';
+		Object.keys(attrs).forEach(function (key) {
 			tag += ' ' + key + '="' + attrs[key].replace(/"/g, '\\"') + '"';
 		});
 		tag += ' />';
