@@ -89,6 +89,8 @@ global.app =
 		@server.listen port
 		console.info "== OK == Server is listening on #{domain}:#{port}\n"
 
+		do callback unless typeof callback isnt 'function'
+
 	run: (callback) ->
 		do @_defineConstants
 		Template.loadHelpers Path.join SOURCE_DIR, 'helpers'
