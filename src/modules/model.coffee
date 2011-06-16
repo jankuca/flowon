@@ -462,10 +462,11 @@ Model.search = (selector, q, callback) ->
 				cur.sort('value', 'desc').limit(20).toArray (err, docs) =>					
 					ids = docs.map (doc) -> doc._id
 					rel = @_createRelevancySheet docs
-					@all _id: $in: ids, (topics) ->
+					@all _id: $in: ids, (topics) =>
 						results = results.concat topics.sort (a, b) -> rel[a.id] < rel[b.id]
 						return fn() unless i is ii
 						callback results
+						@_removeCollections tmp1, tmp2
 
 Model._createSearchIndex = (selector, search_chain, callback) ->
 	if arguments.length is 1
@@ -530,3 +531,7 @@ Model._createRelevancySheet = (docs) ->
 	sheet = {}
 	docs.forEach (doc) -> sheet[doc._id.toString()] = doc.value
 	return sheet
+
+Model._removeCollections = (names...) ->
+	names.forEach (name) ->
+		app.db.collection(name).drop()
