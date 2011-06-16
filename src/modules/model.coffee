@@ -321,6 +321,22 @@ Model.all = (selector, options, callback) ->
 	return @_allEmbedded selector, options, callback if @embedded
 	@_all selector, options, callback
 
+Model.count = (selector, options, callback) ->
+	if arguments.length is 1 and typeof arguments[0] is 'function'
+		callback = arguments[0]
+		options = {}
+		selector = {}
+	else if arguments.length is 2 and typeof arguments[1] is 'function'
+		callback = arguments[1]
+		options = {}
+
+	throw new Error 'Missing callback' if typeof callback isnt 'function'
+
+	selector['date:deleted'] = ($exists: no) unless selector['date:deleted'] isnt undefined or options.deleted
+
+	return @_countEmbedded selector, options, callback if @embedded
+	@_count selector, options, callback
+
 Model._consolidateSelector = (selector) ->
 	if typeof selector isnt 'object'
 		return _id: app.db.pkFactory selector
@@ -364,6 +380,34 @@ Model._allEmbedded = (selector, options, callback) ->
 			, this
 			return callback res[0] or new this if one
 			callback res
+
+Model._count = (selector, options, callback) ->
+	cur = this.collection().find selector, options
+	cur.count (err, count) =>
+		if err
+			console.log selector
+			throw err
+
+		callback count
+
+Model._countEmbedded = (selector, options, callback) ->
+	ParentModel = global[ucFirst @_parent_key]
+	embeds_one = typeof ParentModel.prototype['get' + ucFirst @key] is 'function'
+	field = if embeds_one then @key else plural @key
+	sel = @_embedSelector selector, field
+	options.fields = [field]
+
+	cur = ParentModel.collection().find sel, options
+	cur.toArray (err, docs) =>
+		if err
+			console.log selector
+			throw err
+		
+		count = 0
+		docs.forEach (doc) ->
+			if embeds_one then count += 1
+			else if doc[field] isnt undefined then count += doc[field].length
+		callback count
 
 Model._embedSelector = (selector, ns_key) ->
 	sel = {}
