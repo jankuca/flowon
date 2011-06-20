@@ -275,11 +275,15 @@ Model.embeds_many = (assocs...) ->
 Model.belongs_to = (key) ->
 	@embedded = no
 	@_parent_key = key
-	@prototype.getParent = (callback) ->
+	@prototype.getParent = (options, callback) ->
+		if arguments.length is 1 and typeof arguments[0] is 'function'
+			callback = arguments[0]
+			options = {}
+
 		has_one = typeof global[ucFirst @constructor._parent_key].prototype['get' + ucFirst @key] is 'function'
 		selector = {}
 		selector[if has_one then @key else plural @key] = @getObjectId()
-		global[ucFirst @constructor._parent_key].one selector, callback
+		global[ucFirst @constructor._parent_key].one selector, options, callback
 
 Model.embedded_in = (key) ->
 	@embedded = yes
