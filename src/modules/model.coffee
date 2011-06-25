@@ -250,7 +250,7 @@ Model.has_many = (assocs...) ->
 				options = {}
 			selector = {} unless arguments.length is 3
 
-			ids = @_ref[key]
+			ids = @_ref[assoc]
 			return callback [] if not ids or ids.length is 0
 			selector._id = $in: ids
 			global[ucFirst singular key].all selector, options, callback
