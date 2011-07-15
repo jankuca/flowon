@@ -133,7 +133,7 @@ ContentServer::_checkDomain = ->
 ContentServer::_route = ->
 	@route = route = app.router.match @request.url
 	do @_logRequest
-	return do @_readStaticFile if route is null
+	return do @_readStaticFile if route is null or route.static
 	try
 		do @_routeToController
 	catch err
@@ -184,7 +184,12 @@ ContentServer::_startupController = ->
 ContentServer::_logRequest = (static) ->
 	request = @request
 	ts = do new Date().toUTCString
+
 	url = "#{request.url.pathname}#{request.url.search}"
+	if @route isnt null and @route.dir
+		dir = @route.dir.match(/\/([^\/]+?)\/?$/)[1];
+		url = "[#{dir}] #{url}"
+
 	console.log "[#{ts}][#{request.ip}] #{request.method} #{url}#{if @route is null then ' --> static' else ''}"
 
 ContentServer::_readStaticFile = (unfiltered, error_callback) ->
@@ -192,7 +197,8 @@ ContentServer::_readStaticFile = (unfiltered, error_callback) ->
 		error_callback = arguments[0]
 		unfiltered = no
 
-	path = Path.join PUBLIC_DIR, @pathname
+	dir = if @route isnt null then @route.dir else PUBLIC_DIR
+	path = Path.join dir, @pathname
 	# filtered
 	if not unfiltered
 		return @_coffeeToJS path, error_callback if path.split('.').slice(-2).join('.') is 'coffee.js'

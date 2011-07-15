@@ -15,6 +15,7 @@ var Router = module.exports.Router = Function.inherit(function () {
 	});
 
 	this._routes = [];
+	this._staticDomains = [];
 	this._staticNS = [];
 }, {
 	'push': function (pattern, options) {
@@ -35,6 +36,11 @@ var Router = module.exports.Router = Function.inherit(function () {
 			options
 		]);
 	},
+
+	'bindStaticDomain': function (pattern, path) {
+		this._staticDomains.push([pattern, path]);
+	},
+
 	'pushStaticNamespace': function (ns) {
 		this._staticNS.push(ns);
 	},
@@ -43,6 +49,18 @@ var Router = module.exports.Router = Function.inherit(function () {
 			pathname = url.pathname,
 			query = url.query,
 			result = null;
+
+		if (this._staticDomains.some(function (rule) {
+			if ((rule[0] instanceof RegExp && rule[0].test(url.hostname)) || url.hostname === String(rule[0])) {
+				result = {
+					'static': true,
+					'dir': rule[1],
+				};
+				return true;
+			}
+		})) {
+			return result;
+		}
 
 		if (this._staticNS.some(function (ns) {
 			if (pathname === '/' + ns || (new RegExp('^/' + ns + '/')).test(pathname)) {
@@ -152,6 +170,7 @@ var Router = module.exports.Router = Function.inherit(function () {
 			}
 
 			result = {
+				'static': false,
 				'namespace': route[0],
 				'controller': options.controller,
 				'view': options.view,
