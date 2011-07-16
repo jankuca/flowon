@@ -183,7 +183,7 @@ var Form = module.exports.Form = EventEmitter.inherit(function (key, request) {
 
 			tag += '<option value="' + option[0] + '"';
 			if (this[name]) {
-				tag += (this[name] === option[0]) ? ' selected="selected"' : '';
+				tag += (this[name] == option[0]) ? ' selected="selected"' : '';
 			} else {
 				tag += ((checked_value === undefined && o === 0) || checked_value === option[0]) ? ' selected="selected"' : '';
 			}
