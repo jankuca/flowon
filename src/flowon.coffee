@@ -185,7 +185,7 @@ ContentServer::_logRequest = (static) ->
 	request = @request
 	ts = do new Date().toUTCString
 
-	url = "#{request.url.pathname}#{request.url.search}"
+	url = "#{request.url.pathname}#{request.url.search or ''}"
 	if @route isnt null and @route.dir
 		dir = @route.dir.match(/\/([^\/]+?)\/?$/)[1];
 		url = "[#{dir}] #{url}"

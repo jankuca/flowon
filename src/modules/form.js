@@ -9,7 +9,7 @@ var Form = module.exports.Form = EventEmitter.inherit(function (key, request) {
 	this._files = {};
 	this.submitted = false;
 
-	this.action = request.url.pathname + request.url.search;
+	this.action = request.url.pathname + (request.url.search || '');
 	this.method = 'post';
 	
 	var values = {};

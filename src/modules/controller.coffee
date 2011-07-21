@@ -77,7 +77,7 @@ Controller::getForm = (key) ->
 Controller::link = (ncv, params, abs) ->
 	url = @_request.url
 
-	return "#{url.pathname}#{url.search}" if arguments.length is 0
+	return "#{url.pathname}#{url.search or ''}" if arguments.length is 0
 	return url.href if arguments.length is 1 and typeof arguments[0] is 'boolean'
 
 	if arguments.length is 2 and typeof arguments[1] is 'boolean'
