@@ -17,6 +17,7 @@ var Router = module.exports.Router = Function.inherit(function () {
 	this._routes = [];
 	this._staticDomains = [];
 	this._staticNS = [];
+	this._globalDynamicNS = [];
 }, {
 	'push': function (pattern, options) {
 		var is_valid = (options.controller && options.view);
@@ -41,25 +42,38 @@ var Router = module.exports.Router = Function.inherit(function () {
 		this._staticDomains.push([pattern, path]);
 	},
 
+	'pushGlobalDynamicNamespace': function (ns) {
+		this._globalDynamicNS.push(ns);
+	},
+
 	'pushStaticNamespace': function (ns) {
 		this._staticNS.push(ns);
 	},
+
+	'_isGlobalDynamicNS': function (pathname) {
+		return this._globalDynamicNS.some(function (ns) {
+			return (pathname === '/' + ns || (new RegExp('^/' + ns + '/')).test(pathname));
+		});
+	},
+
 	'match': function (url) {
 		var routes = this._routes,
 			pathname = url.pathname,
 			query = url.query,
 			result = null;
 
-		if (this._staticDomains.some(function (rule) {
-			if ((rule[0] instanceof RegExp && rule[0].test(url.hostname)) || url.hostname === String(rule[0])) {
-				result = {
-					'static': true,
-					'dir': rule[1],
-				};
-				return true;
+		if (!this._isGlobalDynamicNS(pathname)) {
+			if (this._staticDomains.some(function (rule) {
+				if ((rule[0] instanceof RegExp && rule[0].test(url.hostname)) || url.hostname === String(rule[0])) {
+					result = {
+						'static': true,
+						'dir': rule[1],
+					};
+					return true;
+				}
+			})) {
+				return result;
 			}
-		})) {
-			return result;
 		}
 
 		if (this._staticNS.some(function (ns) {
