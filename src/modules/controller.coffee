@@ -47,15 +47,18 @@ Controller::header = (key, value) ->
 	return @_request.getHeader key if value is undefined
 	@_response.setHeader key, value
 
-Controller::cookie = (key, value, expires, secure, httponly) ->
+Controller::cookie = (key, value, expires, secure, httponly, global) ->
 	if arguments.length is 1
 		return if @_response.cookies[key] isnt undefined then @_response.cookies[key] else null
 
-	@_response.setCookie key, value, expires, ".{@_request.hostname}", Boolean(secure), Boolean(httponly)
+	url = @_request.url
+	domain = (if global then ".#{@domain}" else ".#{url.hostname}")
+
+	@_response.setCookie key, value, expires, null, domain, Boolean(secure), Boolean(httponly)
 
 Controller::getSession = -> @_session or null
 Controller::setSession = (session) ->
-	@_response.setCookie 'FLOWONSESSID', session.id, app.get 'session_expiration', ".#{@_request.hostname}", false, true
+	@cookie 'FLOWONSESSID', session.id, app.get('session_expiration'), no, yes, yes
 	@_session = session or null
 
 Controller::setMaxExecutionTimeout = (delay) ->
