@@ -30,7 +30,7 @@ JSON.stringifySorted = (input) ->
 	else
 		switch typeof input
 			when 'undefined' then output += 'null'
-			when 'string' then output += '"' + input.replace(/\n/g, '\\n').replace(/"/g, '\\"') + '"'
+			when 'string' then output += '"' + input.replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/"/g, '\\"') + '"'
 			when 'number'
 				if isNaN input
 					output += 'null'
