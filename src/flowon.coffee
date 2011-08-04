@@ -32,7 +32,15 @@ global.app =
 		global.SOURCE_DIR = __dirname + '/'
 		global.APP_DIR = @get 'app_dir'
 		global.PUBLIC_DIR = @get 'public_dir'
+		global.LANG_DIR = @get 'lang_dir'
 	
+	_loadLangs: ->
+		langs = {}
+		filenames = FS.readdirSync LANG_DIR
+		filenames.forEach (filename) ->
+			langs[Path.basename filenames, '.js'] = require Path.join LANG_DIR, filename
+		@_langs = langs
+
 	_loadModels: ->
 		try
 			model_dir = Path.join APP_DIR, 'models'
@@ -95,9 +103,16 @@ global.app =
 		do @_defineConstants
 		Template.loadHelpers Path.join SOURCE_DIR, 'helpers'
 		Template.loadHelpers Path.join APP_DIR, 'helpers'
+
+		do @_loadLangs
+		console.log @_langs
+
 		@_startDB =>
 			do @_loadModels
 			@_startServer callback
+	
+	lang: (key, locale) ->
+		@_langs[locale][key]
 
 
 Object.defineProperties app,
