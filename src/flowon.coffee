@@ -38,7 +38,7 @@ global.app =
 		langs = {}
 		filenames = FS.readdirSync LANG_DIR
 		filenames.forEach (filename) ->
-			langs[Path.basename filenames, '.js'] = require Path.join LANG_DIR, filename
+			langs[Path.basename filename, '.js'] = require Path.join LANG_DIR, filename
 		@_langs = langs
 
 	_loadModels: ->
@@ -105,7 +105,6 @@ global.app =
 		Template.loadHelpers Path.join APP_DIR, 'helpers'
 
 		do @_loadLangs
-		console.log @_langs
 
 		@_startDB =>
 			do @_loadModels
