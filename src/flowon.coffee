@@ -36,9 +36,12 @@ global.app =
 	
 	_loadLangs: ->
 		langs = {}
-		filenames = FS.readdirSync LANG_DIR
-		filenames.forEach (filename) ->
-			langs[Path.basename filename, '.js'] = require Path.join LANG_DIR, filename
+		try
+			filenames = FS.readdirSync LANG_DIR
+			filenames.forEach (filename) ->
+				langs[Path.basename filename, '.js'] = require Path.join LANG_DIR, filename
+		catch err
+			console.info '-- Failed to load language files (' + err.message + ')'
 		@_langs = langs
 
 	_loadModels: ->
