@@ -66,7 +66,7 @@ var Form = module.exports.Form = EventEmitter.inherit(function (key, request) {
 
 		var tag = '<form';
 		Object.keys(attrs).forEach(function (key) {
-			tag += ' ' + key + '="' + attrs[key].replace(/"/g, '\\"') + '"';
+			tag += ' ' + key + '="' + String(attrs[key]).replace(/"/g, '\\"') + '"';
 		});
 		tag += '>';
 
@@ -89,7 +89,7 @@ var Form = module.exports.Form = EventEmitter.inherit(function (key, request) {
 		var tag = '<input';
 		Object.keys(attrs).forEach(function (key) {
 			if (typeof attrs[key] !== 'object' && typeof attrs[key] !== 'boolean') {
-				tag += ' ' + key + '="' + attrs[key].replace(/"/g, '\\"') + '"';
+				tag += ' ' + key + '="' + String(attrs[key]).replace(/"/g, '\\"') + '"';
 			}
 		});
 		tag += ' />';
@@ -110,7 +110,7 @@ var Form = module.exports.Form = EventEmitter.inherit(function (key, request) {
 
 		var tag = '<input';
 		Object.keys(attrs).forEach(function (key) {
-			tag += ' ' + key + '="' + attrs[key].replace(/"/g, '\\"') + '"';
+			tag += ' ' + key + '="' + String(attrs[key]).replace(/"/g, '\\"') + '"';
 		});
 		tag += ' />';
 
@@ -120,14 +120,14 @@ var Form = module.exports.Form = EventEmitter.inherit(function (key, request) {
 	'textArea': function (name, attrs) {
 		attrs = attrs || {};
 		attrs.name = attrs.name || name;
-		var value = this.values[attrs.name] || '';
+		var value = String(this.values[attrs.name] || '');
 		if (this._errors[name]) {
 			attrs['class'] = attrs['class'] ? attrs['class'] + ' invalid' : 'invalid';
 		}
 
 		var tag = '<textarea';
 		Object.keys(attrs).forEach(function (key) {
-			tag += ' ' + key + '="' + attrs[key].replace(/"/g, '\\"') + '"';
+			tag += ' ' + key + '="' + String(attrs[key]).replace(/"/g, '\\"') + '"';
 		});
 		tag += '>' + value.replace('<', '&lt;').replace('>', '&gt;') + '</textarea>';
 
@@ -144,7 +144,7 @@ var Form = module.exports.Form = EventEmitter.inherit(function (key, request) {
 
 		var tag = '<input';
 		Object.keys(attrs).forEach(function (key) {
-			tag += ' ' + key + '="' + attrs[key].replace(/"/g, '\\"') + '"';
+			tag += ' ' + key + '="' + String(attrs[key]).replace(/"/g, '\\"') + '"';
 		});
 		tag += ' />';
 
@@ -208,7 +208,7 @@ var Form = module.exports.Form = EventEmitter.inherit(function (key, request) {
 
 		var tag = '<button';
 		Object.keys(attrs).forEach(function (key) {
-			tag += ' ' + key + '="' + attrs[key].replace(/"/g, '\\"') + '"';
+			tag += ' ' + key + '="' + String(attrs[key]).replace(/"/g, '\\"') + '"';
 		});
 		tag += '>';
 
@@ -225,7 +225,7 @@ var Form = module.exports.Form = EventEmitter.inherit(function (key, request) {
 
 		var tag = '<' + tag_name;
 		Object.keys(attrs).forEach(function (key) {
-			tag += ' ' + key + '="' + attrs[key].replace(/"/g, '\\"') + '"';
+			tag += ' ' + key + '="' + String(attrs[key]).replace(/"/g, '\\"') + '"';
 		});
 		tag += '>';
 
