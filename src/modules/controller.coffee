@@ -95,8 +95,9 @@ Controller::link = (ncv, params, abs) ->
 		view: ncv[len - 1] or 'default'
 		params: params
 
-	return "#{url.protocol}//#{url.host}#{pathname or '#'}" if abs
-	return pathname or '#'
+	return '#' if !pathname
+	return "#{url.protocol}//#{url.host}#{pathname}" if abs
+	return pathname
 
 Controller::redirect = (ncv, params) ->
 	@header 'location', @link.apply this, arguments
