@@ -19,6 +19,7 @@ HTTP = require 'http'
 URL = require 'url'
 Path = require 'path'
 FS = require 'fs'
+util = require 'util'
 
 spawn = require('child_process').spawn
 
@@ -200,14 +201,13 @@ ContentServer::_startupController = ->
 
 ContentServer::_logRequest = (static) ->
 	request = @request
-	ts = do new Date().toUTCString
 
-	url = "#{request.url.pathname}#{request.url.search or ''}"
+	url = "#{request.url.protocol}//#{request.url.hostname}#{request.url.pathname}#{request.url.search or ''}"
 	if @route isnt null and @route.dir
 		dir = @route.dir.match(/\/([^\/]+?)\/?$/)[1];
 		url = "[#{dir}] #{url}"
 
-	console.log "[#{ts}][#{request.ip}] #{request.method} #{url}#{if @route is null then ' --> static' else ''}"
+	util.log "#{request.method} #{url}#{if @route is null then ' -> [static]' else ''}"
 
 ContentServer::_readStaticFile = (unfiltered, error_callback) ->
 	if arguments.length is 1 and typeof arguments[0] is 'function'
