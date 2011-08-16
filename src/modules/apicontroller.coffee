@@ -18,36 +18,11 @@ Controller::terminate = (status, message) ->
 			error: message
 	@render status
 
-
-JSON.stringifySorted = (input) ->
-	output = ''
-	if input instanceof Array
-		output += '['
-		output += input.map((item) -> JSON.stringifySorted item).join ','
-		output += ']'
-	else if input is null
-		output += 'null'
-	else
-		switch typeof input
-			when 'undefined' then output += 'null'
-			when 'string' then output += '"' + input.replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/"/g, '\\"') + '"'
-			when 'number'
-				if isNaN input
-					output += 'null'
-				else
-					output += input
-			when 'boolean' then output += input
-			when 'object'
-				output += '{'
-				output += Object.keys(input).sort().map((key) -> '"' + key + '":' + JSON.stringifySorted input[key]).join ','
-				output += '}'
-	return output
-
 JSON.stringifyFormatted = (input) ->
 	tab = '  '
 
 	output = ''
-	json = JSON.stringifySorted input
+	json = JSON.stringify input
 	indent_level = 0
 	in_string = no
 	
