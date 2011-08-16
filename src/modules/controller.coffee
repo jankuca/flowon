@@ -59,6 +59,8 @@ Controller::cookie = (key, value, expires, secure, httponly, global) ->
 Controller::getSession = -> @_session or null
 Controller::setSession = (session) ->
 	@cookie 'FLOWONSESSID', session.id, app.get('session_expiration'), no, yes, yes
+	session.doc['_domain'] = @domain
+	session.save() # detached thread
 	@_session = session or null
 
 Controller::setMaxExecutionTimeout = (delay) ->
