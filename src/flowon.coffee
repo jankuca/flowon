@@ -126,6 +126,7 @@ Object.defineProperties app,
 			db_type: null
 			max_execution_time: 15
 			session_expiration: '+ 1 day'
+			session_domain_level: 3
 	router:
 		value: do new Router
 

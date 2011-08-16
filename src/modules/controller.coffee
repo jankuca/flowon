@@ -10,6 +10,7 @@ module.exports.Controller = Controller = Function.inherit (request, response, ro
 	@method = request.method
 	@input = request.data
 	@domain = request.url.hostname.split('.').slice(-2).join('.')
+	@subdomain = request.url.hostname.split('.').slice(-3, -2)[0]
 	@xhr = Boolean request.headers['x-requested-with']?.match /xmlhttprequest/i
 
 	@_rendered = no
@@ -47,18 +48,23 @@ Controller::header = (key, value) ->
 	return @_request.getHeader key if value is undefined
 	@_response.setHeader key, value
 
-Controller::cookie = (key, value, expires, secure, httponly, global) ->
+Controller::cookie = (key, value, expires, secure, httponly, level) ->
 	if arguments.length is 1
 		return if @_response.cookies[key] isnt undefined then @_response.cookies[key] else null
 
 	url = @_request.url
-	domain = (if global then ".#{@domain}" else ".#{url.hostname}")
+	if level is 2
+		domain = ".#{@domain}"
+	else if level is 3
+		domain = ".#{@subdomain}.#{@domain}"
+	else
+		domain = ".#{url.hostname}"
 
 	@_response.setCookie key, value, expires, null, domain, Boolean(secure), Boolean(httponly)
 
 Controller::getSession = -> @_session or null
 Controller::setSession = (session) ->
-	@cookie 'FLOWONSESSID', session.id, app.get('session_expiration'), no, yes, yes
+	@cookie 'FLOWONSESSID', session.id, app.get('session_expiration'), no, yes, app.get('session_domain_level')
 	session.doc['_domain'] = @domain
 	session.save() # detached thread
 	@_session = session or null
