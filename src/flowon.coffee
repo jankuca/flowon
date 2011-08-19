@@ -180,8 +180,8 @@ ContentServer::_prepareController = (Controller) ->
 ContentServer::_prepareSession = (callback) ->
 	id = @request.cookies.FLOWONSESSID
 	Session.one id, (session) =>
-		return callback session if session.stored
-		session.updateTimestamp 'date:created'
+		session.updateTimestamp 'date:created' if not session.stored
+		session.updateTimestamp 'date:updated'
 		session.save -> callback session
 
 ContentServer::_startupController = ->
