@@ -9,7 +9,7 @@ module.exports.Controller = Controller = Function.inherit (request, response, ro
 
 	@method = request.method
 	@input = request.data
-	@domain = request.url.hostname.split('.').slice(-2).join('.')
+	@domain = request.domain
 	@subdomain = request.url.hostname.split('.').slice(-3, -2)[0]
 	@host = request.url.host
 	@xhr = Boolean request.headers['x-requested-with']?.match /xmlhttprequest/i

@@ -8,6 +8,7 @@ var HttpRequest = module.exports.HttpRequest = require('events').EventEmitter.in
 	this.request = request;
 	this.host = request.headers.host;
 	this.url = Url.parse('http://' + this.host + request.url, true);
+	this.domain = this.url.hostname.split('.').slice(-2).join('.')
 	this.abs_url = 'http://' + this.host + this.url.pathname + (this.url.search || '');
 	this.method = request.method;
 	this.headers = request.headers;
