@@ -274,8 +274,8 @@ ContentServer::_returnStaticData = (data) ->
 			data = ejs.render
 				base_uri: app.get 'base_uri'
 				browser: @request.browser
-				__request: @request
-				__response: @response
+				request: @request
+				response: @response
 
 	@response.setHeaders @constructor.getHeadersByExtension ext
 	@response.write data, 'binary'
