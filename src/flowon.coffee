@@ -83,15 +83,21 @@ global.app =
 			else do callback unless typeof callback isnt 'function'
 
 	_startDb_mongodb: (callback) ->
+		ok = ->
+			console.info '== OK == Connected to the database'
+			do callback unless typeof callback isnt 'function'
+
 		driver = @get 'db_driver'
-		@db = new driver.Db (@get 'db_name'),
+		@db = db = new driver.Db (@get 'db_name'),
 			new driver.Server (@get 'db_server'), (@get 'db_port'), {}
 		@db.open (err) ->
 			return console.error '-- Error: Connection to database failed:' + err if err
-			@db.authenticate app.get('db_user'), app.get('db_password'), (err) ->
-				return console.error '-- Error: Database authentication failed:' + err if err
-				console.info '== OK == Connected to the database'
-				do callback unless typeof callback isnt 'function'
+			if app.get('db_user')
+				db.authenticate app.get('db_user'), app.get('db_password'), (err) ->
+					return console.error '-- Error: Database authentication failed:' + err if err
+					ok()
+			else
+				ok()
 
 	_startServer: (callback) ->
 		domain = @get('domain') or '*'
