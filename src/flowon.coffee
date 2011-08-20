@@ -88,8 +88,10 @@ global.app =
 			new driver.Server (@get 'db_server'), (@get 'db_port'), {}
 		@db.open (err) ->
 			return console.error '-- Error: Connection to database failed:' + err if err
-			console.info '== OK == Connected to the database'
-			do callback unless typeof callback isnt 'function'
+			@db.authenticate app.get('db_user'), app.get('db_password'), (err) ->
+				return console.error '-- Error: Database authentication failed:' + err if err
+				console.info '== OK == Connected to the database'
+				do callback unless typeof callback isnt 'function'
 
 	_startServer: (callback) ->
 		domain = @get('domain') or '*'
