@@ -258,16 +258,34 @@ Model.has_many = (assocs...) ->
 
 Model.embeds_one = (assocs...) ->
 	assocs.forEach (assoc) ->
-		this['get' + ucFirst assoc] = (callback) ->
-			child = @_cache[assoc] or new global[ucFirst assoc]
+		this['get' + ucFirst assoc] = (options, callback) ->
+			if arguments.length is 0
+				options = {}
+			if arguments.length is 1 and typeof arguments[0] is 'function'
+				callback = arguments[0]
+				options = {}
+
+			child = @_cache[assoc]
+			if not child or (child.deleted and not options.deleted)
+				child = new global[ucFirst assoc]
+
 			callback child unless typeof callback isnt 'function'
 			return child
 	, @prototype
 
 Model.embeds_many = (assocs...) ->
 	assocs.forEach (assoc) ->
-		this['get' + ucFirst assoc] = (callback) ->
+		this['get' + ucFirst assoc] = (options, callback) ->
+			if arguments.length is 0
+				options = {}
+			if arguments.length is 1 and typeof arguments[0] is 'function'
+				callback = arguments[0]
+				options = {}
+
 			children = @_cache[assoc] or []
+			if not options.deleted
+				children = children.filter (child) -> not child.deleted
+
 			callback children unless typeof callback isnt 'function'
 			return children
 	, @prototype
