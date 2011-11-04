@@ -216,7 +216,12 @@ Model::updateTimestamp = (keys...) ->
 	, this
 
 # -- static --
-Model.collection = -> app.db.collection (plural @key)
+Model.collection = ->
+	result = null
+	app.db.collection (plural @key), (err, collection) ->
+		throw err if err
+		result = collection
+	return result
 
 Model.define = (key, constructor, prototype) ->
 	M = @inherit constructor, prototype

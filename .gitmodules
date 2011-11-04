@@ -15,4 +15,4 @@
 	url = git://gist.github.com/871775.git
 [submodule "lib/node-mongodb-native"]
 	path = lib/node-mongodb-native
-	url = git://github.com/jankuca/node-mongodb-native.git
+	url = git://github.com/christkv/node-mongodb-native.git
