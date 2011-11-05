@@ -88,13 +88,23 @@ global.app =
 			do callback unless typeof callback isnt 'function'
 
 		driver = @get 'db_driver'
-		@db = db = new driver.Db (@get 'db_name'),
-			new driver.Server (@get 'db_server'), (@get 'db_port'), {}
+		rs_name = @get 'db_replica_set'
+		if rs_name
+			console.log('-- Info: Replica set name: ', rs_name);
+			servers = @get 'db_servers'
+			rs_servers = Object.keys(servers).map (id, i, arr) ->
+				url = servers[id][0].split(':')
+				return new driver.Server(url[0], url[1], (auto_reconnect: true))
+			rs = new driver.ReplSetServers rs_servers, (rs_name: rs_name)
+			@db = db = new driver.Db (@get 'db_name'), rs
+		else
+			@db = db = new driver.Db (@get 'db_name'),
+				new driver.Server (@get 'db_server'), (@get 'db_port'), {}
 		@db.open (err) ->
-			return console.error '-- Error: Connection to database failed:' + err if err
+			return console.error '-- Error: Connection to database failed: ' + err if err
 			if app.get('db_user')
 				db.authenticate app.get('db_user'), app.get('db_password'), (err) ->
-					return console.error '-- Error: Database authentication failed:' + err if err
+					return console.error '-- Error: Database authentication failed: ' + err if err
 					ok()
 			else
 				ok()
