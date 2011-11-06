@@ -156,6 +156,15 @@ ContentServer = Function.inherit (req, res) ->
 	return
 
 ContentServer::route = ->
+	hostname = @request.host.split '.'
+
+	if hostname.length is 2 # no subdomain specified
+		norm_url = 'http://www.' + hostname.join('.') + @request.url.pathname + @request.url.search
+		@response.status = 301
+		@response.setHeader 'location', norm_url
+		do @response.end
+		return
+
 	return @terminate 404 if not @_checkDomain
 	try
 		do @_route
@@ -164,7 +173,7 @@ ContentServer::route = ->
 
 ContentServer::_checkDomain = ->
 	domain = app.get 'domain'
-	hostname = @request.headers.hostname.split '.'
+	hostname = @request.url.hostname.split '.'
 	return not domain or domain is hostname.slice(-2).join '.'
 
 ContentServer::_route = ->
