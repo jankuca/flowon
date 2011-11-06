@@ -54,7 +54,7 @@ Controller::cookie = (key, value, expires, secure, httponly, level) ->
 		return if @_response.cookies[key] isnt undefined then @_response.cookies[key] else null
 
 	url = @_request.url
-	if level is 2
+	if level is 2 or not @subdomain
 		domain = ".#{@domain}"
 	else if level is 3
 		domain = ".#{@subdomain}.#{@domain}"
