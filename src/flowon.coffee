@@ -312,10 +312,10 @@ ContentServer::terminate = (status, message) ->
 	@controller.terminate status, message
 
 ContentServer.getHeadersByExtension = (ext) ->
-	headers = @headers[ext] or {}
+	headers = JSON.parse(JSON.stringify(@headers[ext] or {}))
 
-	if headers.expires is false
-		delete headers.expires
+	if headers['expires'] is false
+		delete headers['expires']
 	else
 		headers['cache-control'] = 'public, must-revalidate'
 	
@@ -325,13 +325,13 @@ ContentServer.getHeadersByExtension = (ext) ->
 ContentServer.headers =
 	'.html':
 		'content-type': 'text/html; charset=UTF-8'
-		expires: false
+		'expires': false
 	'.js':
 		'content-type': 'text/javascript; charset=UTF-8'
-		expires: false
+		'expires': false
 	'.css':
 		'content-type': 'text/css; charset=UTF-8'
-		expires: false
+		'expires': false
 	'.manifest':
 		'content-type': 'text/cache-manifest; charset=UTF-8'
-		expires: false
+		'expires': false
