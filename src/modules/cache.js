@@ -3,7 +3,6 @@
 
 var Path = require('path'),
 	FileSystem = require('fs'),
-	Base64 = require('base64/base64.js').Base64,
 	RelativeDate = require('relativedate/relativedate.js');
 
 var Cache = module.exports.Cache = Function.inherit(function (namespace, key) {
@@ -17,7 +16,7 @@ Cache.get = function (namespace, key, callback) {
 		return;
 	}
 
-	key = Base64.encode(key);
+	key = new Buffer(key).toString('base64');
 	var memcached = app.memcached;
 	// Check if we are using memcached; if not, fall back to file cache
 	if (memcached) {
@@ -98,7 +97,7 @@ Cache.set = function (namespace, key, data, expires, callback) {
 	var add = 0,
 		now = Math.round(new Date().getTime() / 1000);
 
-	key = Base64.encode(key);
+	key = new Buffer(key).toString('base64');
 
 	// expiration
 	if (expires === undefined) {
@@ -147,7 +146,7 @@ Cache.set = function (namespace, key, data, expires, callback) {
 };
 
 Cache.remove = function (namespace, key, callback) {
-	key = Base64.encode(key);
+	key = new Buffer(key).toString('base64');
 	// Check if we are using memcached; if not, fall back to file cache
 	var memcached = app.getMemcached();
 	if (memcached) {

@@ -1,6 +1,3 @@
-[submodule "lib/base64"]
-	path = lib/base64
-	url = git://gist.github.com/788064.git
 [submodule "lib/ejs"]
 	path = lib/ejs
 	url = git://gist.github.com/788091.git
