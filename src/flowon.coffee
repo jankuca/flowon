@@ -296,7 +296,7 @@ ContentServer::_handleStaticDir = ->
 ContentServer::_returnStaticData = (data) ->
 	ext = Path.extname @pathname
 	switch ext
-		when '.html', '.css'
+		when '.html', '.css', '.manifest'
 			ejs = new EJS text: data
 			data = ejs.render
 				base_uri: app.get 'base_uri'
