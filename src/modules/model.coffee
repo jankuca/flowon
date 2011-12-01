@@ -485,15 +485,16 @@ Model.search = (selector, q, callback) ->
 			throw err if err
 			tmp2 = @_createRelevancyIndex tmp1, q, (err, result) =>
 				throw err if err
-				cur = app.db.collection(tmp2).find()
-				cur.sort('value', 'desc').limit(20).toArray (err, docs) =>					
-					ids = docs.map (doc) -> doc._id
-					rel = @_createRelevancySheet docs
-					@all _id: $in: ids, (topics) =>
-						results = results.concat topics.sort (a, b) -> rel[a.id] < rel[b.id]
-						return fn() unless i is ii
-						callback results
-						@_removeCollections tmp1, tmp2
+				app.db.collection tmp2, (err, collection) =>
+					cur = collection.find()
+					cur.sort('value', 'desc').limit(20).toArray (err, docs) =>
+						ids = docs.map (doc) -> doc._id
+						rel = @_createRelevancySheet docs
+						@all _id: $in: ids, (topics) =>
+							results = results.concat topics.sort (a, b) -> rel[a.id] < rel[b.id]
+							return fn() unless i is ii
+							callback results
+							@_removeCollections tmp1, tmp2
 
 Model._createSearchIndex = (selector, search_chain, callback) ->
 	if arguments.length is 1
@@ -560,5 +561,9 @@ Model._createRelevancySheet = (docs) ->
 	return sheet
 
 Model._removeCollections = (names...) ->
+	cb = (err, collection) ->
+		throw err if err
+		collection.drop()
+
 	names.forEach (name) ->
-		app.db.collection(name).drop()
+		app.db.collection(name, cb)
