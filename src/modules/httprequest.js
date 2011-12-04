@@ -14,6 +14,7 @@ var HttpRequest = module.exports.HttpRequest = require('events').EventEmitter.in
 	this.headers = request.headers;
 	this.ip = request.headers['x-forwarded-for'] || request.connection.remoteAddress;
 	this.ready = false;
+	this.closed = false;
 
 	var _r = this,
 		cookie_header = request.headers.cookie,
@@ -21,6 +22,10 @@ var HttpRequest = module.exports.HttpRequest = require('events').EventEmitter.in
 		fields = (cookie_header !== undefined) ? cookie_header.split(/;\s?/) : [],
 		field,
 		match;
+
+	request.once('close', function () {
+		_r.closed = true;
+	});
 
 	// cookies
 	this.cookies = {};
