@@ -157,9 +157,15 @@ ContentServer = Function.inherit (req, res) ->
 
 ContentServer::route = ->
 	hostname = @request.host.split '.'
+	pathname = @request.url.pathname
 
-	if hostname.length is 2 # no subdomain specified
-		norm_url = 'http://www.' + hostname.join('.') + @request.url.pathname + @request.url.search
+	exceptions = [
+		/\/cache.manifest$/i
+	]
+	exception = exceptions.some (rx) -> rx.test(pathname)
+
+	if not exception and hostname.length is 2 # no subdomain specified
+		norm_url = 'http://www.' + hostname.join('.') + pathname + @request.url.search
 		@response.status = 301
 		@response.setHeader 'location', norm_url
 		do @response.end
@@ -297,6 +303,12 @@ ContentServer::_returnStaticData = (data) ->
 	ext = Path.extname @pathname
 	switch ext
 		when '.html', '.css', '.manifest'
+			if ext is '.manifest' and @request.domain is @request.host
+				@response.status = 404
+				@response.setHeaders @constructor.getHeadersByExtension ext
+				do @response.end
+				return
+
 			ejs = new EJS text: data
 			data = ejs.render
 				base_uri: app.get 'base_uri'
