@@ -28,7 +28,7 @@ var HttpResponse = module.exports.HttpResponse = Function.inherit(function (resp
 	},
 
 	'setHeaders': function (headers) {
-		Object.getOwnPropertyNames(headers).forEach(function (key) {
+		Object.keys(headers).forEach(function (key) {
 			this.headers[key.toLowerCase()] = headers[key].toString();
 		}, this);
 	},
