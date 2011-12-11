@@ -175,7 +175,7 @@ var Form = module.exports.Form = EventEmitter.inherit(function (key, request) {
 	},
 
 	'selectBox': function (name, options, checked_value) {
-		if (this.values[name] === undefined && options.length !== 0) {
+		if (checked_value === undefined && this.values[name] === undefined && options.length !== 0) {
 			this.values[name] = Array.isArray(options[0]) ? options[0][0] : options[0];
 		}
 
