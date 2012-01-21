@@ -475,6 +475,9 @@ Model.searchable = ->
 
 Model.search = (selector, q, callback) ->
 	throw new Error('This model is not searchable.') if @_search_chains is undefined
+
+	q = { '$in': q.toLowerCase().split(/\s+/) };
+
 	results = []
 	i = 0
 	ii = @_search_chains.length
@@ -490,15 +493,20 @@ Model.search = (selector, q, callback) ->
 					cur.sort('value', 'desc').limit(20).toArray (err, docs) =>
 						ids = docs.map (doc) -> doc._id
 						rel = @_createRelevancySheet docs
-						@all _id: $in: ids, (topics) =>
-							results = results.concat topics.sort (a, b) -> rel[a.id] < rel[b.id]
+						@all _id: $in: ids, (objects) =>
+							results = results.concat objects.sort (a, b) -> rel[a.id] < rel[b.id]
 							return fn() unless i is ii
-							callback results
+
+							result_ids = []
+							callback results.filter (result) ->
+								return false if result_ids.indexOf(result.id) != -1
+								result_ids.push result.id
+
 							@_removeCollections tmp1, tmp2
 
 Model._createSearchIndex = (selector, search_chain, callback) ->
-	if arguments.length is 1
-		callback = arguments[0]
+	if arguments.length is 2
+		callback = arguments[1]
 		selector = {}
 
 	tmp_collection = 'tmp.mr.mapreduce_' + (new Date().getTime()) + '_' + Math.round(Math.random() * 1000)
@@ -509,8 +517,9 @@ Model._createSearchIndex = (selector, search_chain, callback) ->
 		map: """function () {
 			var words = [], i, ii;
 			try {
-				this['#{search_chain[0]}'].forEach(function (doc) {
-					if (doc.length !== void 0) {
+				var source = this['#{search_chain[0]}'];
+				(source instanceof Array ? source : source.split(/\\s+/)).forEach(function (doc) {
+					if (doc.length !== undefined) {
 						words = words.concat(doc);
 					} else {
 						words = words.concat(doc['#{search_chain[1]}'] || []);
@@ -538,7 +547,7 @@ Model._createRelevancyIndex = (mapreduce, q, callback) ->
 	command =
 		mapreduce: mapreduce
 		query:
-			_id: $in: q
+			'_id': q
 		out: tmp_collection
 		map: """function () {
 			for (var i = 0, ii = this.value.docs.length; i < ii; ++i) {

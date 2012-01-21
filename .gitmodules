@@ -13,3 +13,6 @@
 [submodule "lib/node-mongodb-native"]
 	path = lib/node-mongodb-native
 	url = git://github.com/christkv/node-mongodb-native.git
+[submodule "node_modules/eco"]
+	path = node_modules/eco
+	url = http://github.com/sstephenson/eco.git
