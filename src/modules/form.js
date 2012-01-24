@@ -151,6 +151,20 @@ var Form = module.exports.Form = EventEmitter.inherit(function (key, request) {
 		return tag;
 	},
 
+	'hiddenInput': function (name, attrs) {
+		attrs = attrs || {};
+		attrs.name = attrs.name || name;
+		attrs.type = attrs.type || 'hidden';
+
+		var tag = '<input';
+		Object.keys(attrs).forEach(function (key) {
+			tag += ' ' + key + '="' + String(attrs[key]).replace(/"/g, '\\"') + '"';
+		});
+		tag += ' />';
+
+		return tag;
+	},
+
 	'radioList': function (name, options, item_tag_name, checked_value) {
 		var out = [];
 		options.forEach(function (option, o) {
