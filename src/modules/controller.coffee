@@ -137,7 +137,7 @@ Controller::_terminateWithMessage = (message) ->
 			@header 'content-type', 'text/plain; charset=UTF-8'
 			body = """
 				Application error: #{message}
-				Rendering error:   #{error}"""
+				Rendering error:   #{err}"""
 		@_finishRendering body, Boolean err
 
 Controller::_finishRendering = (body, no_headers) ->
