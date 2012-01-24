@@ -188,12 +188,19 @@ var Form = module.exports.Form = EventEmitter.inherit(function (key, request) {
 		return out.join('');
 	},
 
-	'selectBox': function (name, options, checked_value) {
+	'selectBox': function (name, options, checked_value, attrs) {
 		if (checked_value === undefined && this.values[name] === undefined && options.length !== 0) {
 			this.values[name] = Array.isArray(options[0]) ? options[0][0] : options[0];
 		}
 
-		var tag = '<select name="' + name + '">';
+		attrs = attrs || {};
+		attrs.name = attrs.name || name;
+
+		var tag = '<select';
+		Object.keys(attrs).forEach(function (key) {
+			tag += ' ' + key + '="' + String(attrs[key]).replace(/"/g, '\\"') + '"';
+		});
+		tag += ' />';
 		options.forEach(function (option, o) {
 			if (!Array.isArray(option)) {
 				option = [option, option];
