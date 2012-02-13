@@ -241,7 +241,7 @@ ContentServer::_logRequest = (static) ->
 		dir = @route.dir.match(/\/([^\/]+?)\/?$/)[1];
 		url = "[#{dir}] #{url}"
 
-	util.log "#{request.method} #{url}#{if @route is null then ' -> [static]' else ''}"
+	util.log "#{request.ip}: #{request.method} #{url}#{if @route is null then ' -> [static]' else ''}"
 
 ContentServer::_readStaticFile = (unfiltered, error_callback) ->
 	if arguments.length is 1 and typeof arguments[0] is 'function'
