@@ -34,7 +34,7 @@ global.app =
 		global.APP_DIR = @get 'app_dir'
 		global.PUBLIC_DIR = @get 'public_dir'
 		global.LANG_DIR = @get 'lang_dir'
-	
+
 	_loadLangs: ->
 		langs = {}
 		try
@@ -131,7 +131,7 @@ global.app =
 		@_startDB =>
 			do @_loadModels
 			@_startServer callback
-	
+
 	lang: (key, locale) ->
 		@_langs[locale][key]
 
@@ -339,7 +339,7 @@ ContentServer.getHeadersByExtension = (ext) ->
 		delete headers['expires']
 	else
 		headers['cache-control'] = 'public, must-revalidate'
-	
+
 	return headers
 
 
