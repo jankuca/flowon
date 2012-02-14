@@ -257,7 +257,6 @@ ContentServer::_readStaticFile = (unfiltered, error_callback) ->
 
 	# defend against directory traversal attack
 	relative_to_public_dir = Path.relative dir, path
-	console.log dir, path, relative_to_public_dir
 	if relative_to_public_dir.substr(0, 3) is '../'
 		return @terminate 403
 
