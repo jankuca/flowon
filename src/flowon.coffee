@@ -21,6 +21,8 @@ Path = require 'path'
 FS = require 'fs'
 util = require 'util'
 
+Path.relative = Path.relative || require('./path-improved').relative;
+
 spawn = require('child_process').spawn
 
 global.app =
@@ -171,6 +173,8 @@ ContentServer::route = ->
 		do @response.end
 		return
 
+	@pathname = '.' + @pathname
+
 	return @terminate 404 if not @_checkDomain
 	try
 		do @_route
@@ -249,7 +253,14 @@ ContentServer::_readStaticFile = (unfiltered, error_callback) ->
 		unfiltered = no
 
 	dir = if @route isnt null then @route.dir else PUBLIC_DIR
-	path = Path.join dir, @pathname
+	path = Path.resolve dir, @pathname
+
+	# defend against directory traversal attack
+	relative_to_public_dir = Path.relative dir, path
+	console.log dir, path, relative_to_public_dir
+	if relative_to_public_dir.substr(0, 3) is '../'
+		return @terminate 403
+
 	# filtered
 	if not unfiltered
 		return @_coffeeToJS path, error_callback if path.split('.').slice(-2).join('.') is 'coffee.js'
