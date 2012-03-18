@@ -1,6 +1,6 @@
 Path = require 'path'
 
-Template = require('modules/template').Template
+Template = require('./template').Template
 
 module.exports.Controller = Controller = Function.inherit (request, response, route) ->
 	@_request = request
@@ -97,7 +97,7 @@ Controller::link = (ncv, params, abs) ->
 	if arguments.length is 2 and typeof arguments[1] is 'boolean'
 		abs = arguments[1]
 		params = undefined
-	
+
 	ncv = ncv.split ':'
 	len = ncv.length
 	pathname = app.router.resolve
@@ -122,7 +122,7 @@ Controller::terminate = (status, message) ->
 		@_response.status = status
 	else
 		message = arguments[0]
-	
+
 	return do @_response.end unless message
 	@_terminateWithMessage message
 

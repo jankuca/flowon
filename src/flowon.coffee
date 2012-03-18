@@ -1,19 +1,19 @@
-require.paths.unshift __dirname, __dirname + '/../lib/'
 
 # libraries
-require '../lib/utils/utils'
+require '../node_modules/utils/utils'
 EJS = require('ejs/ejs').EJS
 
 # modules
-Router = require('modules/router').Router
-HttpRequest = require('modules/httprequest').HttpRequest
-HttpResponse = require('modules/httpresponse').HttpResponse
-Template = require('modules/template').Template
-global.Cache = require('modules/cache').Cache
-global.Form = require('modules/form.js').Form
-global.Model = require('modules/model').Model
-global.Controller = require('modules/controller.coffee').Controller
-global.ApiController = require('modules/apicontroller.coffee').Controller
+Router = require('./modules/router').Router
+HttpRequest = require('./modules/httprequest').HttpRequest
+HttpResponse = require('./modules/httpresponse').HttpResponse
+Template = require('./modules/template').Template
+global.Cache = require('./modules/cache').Cache
+global.Form = require('./modules/form.js').Form
+global.Model = require('./modules/model').Model
+global.Controller = require('./modules/controller.coffee').Controller
+global.ApiController = require('./modules/apicontroller.coffee').Controller
+global.MongoDBDriver = require('node-mongodb-native');
 
 HTTP = require 'http'
 URL = require 'url'
@@ -61,7 +61,7 @@ global.app =
 	_loadSessionModel: ->
 		if @db isnt undefined
 			if global.Session is undefined
-				require 'modules/models/session'
+				require './modules/models/session'
 				console.info '-- Info: Using the built-in session model.'
 			else
 				console.info '-- Info: Using a custom session model.'

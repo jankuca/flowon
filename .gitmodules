@@ -1,15 +1,15 @@
-[submodule "lib/ejs"]
-	path = lib/ejs
+[submodule "node_modules/ejs"]
+	path = node_modules/ejs
 	url = git://gist.github.com/788091.git
-[submodule "lib/relativedate"]
-	path = lib/relativedate
+[submodule "node_modules/relativedate"]
+	path = node_modules/relativedate
 	url = git://gist.github.com/788114.git
-[submodule "lib/node-formidable"]
-	path = lib/node-formidable
+[submodule "node_modules/node-formidable"]
+	path = node_modules/node-formidable
 	url = git://github.com/felixge/node-formidable.git
-[submodule "lib/utils"]
-	path = lib/utils
+[submodule "node_modules/utils"]
+	path = node_modules/utils
 	url = git://gist.github.com/871775.git
-[submodule "lib/node-mongodb-native"]
-	path = lib/node-mongodb-native
+[submodule "node_modules/node-mongodb-native"]
+	path = node_modules/node-mongodb-native
 	url = git://github.com/christkv/node-mongodb-native.git
