@@ -7,7 +7,7 @@ FlowOn is a very simple but powerful MVC framework for building RIAs.
 	// boot.js:
 
 	// Load the framework into a global variable
-	require('./lib/flowon/src/flowon.js');
+	require('flowon');
 	// The framework object is loaded into the global object -> accessible as "app" at all time
 
 	// Set up the environment
@@ -25,7 +25,7 @@ FlowOn is a very simple but powerful MVC framework for building RIAs.
 	app.set('db_name', 'test');
 	app.set('db_server', '127.0.0.1');
 	app.set('db_port', 27017);
-	app.setDbDriver(require('./lib/node-mongodb-native/lib/mongodb/'));
+	app.setDbDriver(MongoDBDriver); // globally exposed by FlowOn
 
 	// Set up routes
 	// The namespace is initially empty (i.e. the domain root)

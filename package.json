@@ -1,0 +1,4 @@
+{
+	"name": "flowon",
+	"main": "src/flowon.coffee"
+}
