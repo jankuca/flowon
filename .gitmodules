@@ -9,7 +9,7 @@
 	url = git://github.com/felixge/node-formidable.git
 [submodule "node_modules/utils"]
 	path = node_modules/utils
-	url = git://gist.github.com/871775.git
+	url = git://gist.github.com/2198821.git
 [submodule "node_modules/node-mongodb-native"]
 	path = node_modules/node-mongodb-native
 	url = git://github.com/christkv/node-mongodb-native.git
