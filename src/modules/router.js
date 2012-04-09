@@ -92,13 +92,17 @@ var Router = module.exports.Router = Function.inherit(function () {
 				params = {},
 				param_keys = [],
 				rules,
+				unmatched_rules,
 				key;
 
-			
+
 			Object.getOwnPropertyNames(route[2]).forEach(function (key) {
 				options[key] = route[2][key];
 			});
 			rules = options.params;
+			if (rules && rules instanceof RegExp === false) {
+				unmatched_rules = JSON.parse('{"' + Object.keys(rules).join('":1,"') + '":1}');
+			}
 
 			if (placeholders !== null) {
 				placeholders.forEach(function (placeholder) {
@@ -129,10 +133,13 @@ var Router = module.exports.Router = Function.inherit(function () {
 			} else {
 				if (Object.getOwnPropertyNames(rules).some(function (key) {
 					var index = param_keys.indexOf(key);
-					if (index === -1 || !rules[key].test(match[index + 1])) {
-						return true;
+					if (index !== -1) {
+						if (!rules[key].test(match[index + 1])) {
+							return true;
+						}
+						params[key] = match[index + 1];
+						delete unmatched_rules[key];
 					}
-					params[key] = match[index + 1];
 				})) {
 					return;
 				}
@@ -175,10 +182,15 @@ var Router = module.exports.Router = Function.inherit(function () {
 							return true;
 						}
 						params[key] = query[key];
+						delete unmatched_rules[key];
 					})) {
 						return;
 					}
 				}
+			}
+
+			if (unmatched_rules && Object.keys(unmatched_rules).length !== 0) {
+				return;
 			}
 
 			result = {
