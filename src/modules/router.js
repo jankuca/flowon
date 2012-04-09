@@ -129,12 +129,10 @@ var Router = module.exports.Router = Function.inherit(function () {
 			} else {
 				if (Object.getOwnPropertyNames(rules).some(function (key) {
 					var index = param_keys.indexOf(key);
-					if (index > -1) {
-						if (!rules[key].test(match[index + 1])) {
-							return true;
-						}
-						params[key] = match[index + 1];
+					if (index === -1 || !rules[key].test(match[index + 1])) {
+						return true;
 					}
+					params[key] = match[index + 1];
 				})) {
 					return;
 				}
