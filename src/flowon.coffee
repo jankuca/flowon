@@ -237,7 +237,7 @@ ContentServer::_startupController = ->
 	catch err
 		@terminate 503, err
 
-ContentServer::_logRequest = (static) ->
+ContentServer::_logRequest = () ->
 	request = @request
 
 	url = "#{request.url.protocol}//#{request.url.hostname}#{request.url.pathname}#{request.url.search or ''}"
