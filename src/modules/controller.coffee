@@ -101,7 +101,7 @@ Controller::link = (ncv, params, abs) ->
 	ncv = ncv.split ':'
 	len = ncv.length
 	pathname = app.router.resolve
-		namespace: ncv[len - 3] or @_route.namespace or null
+		namespace: (if ncv[len - 3] is undefined then @_route.namespace else ncv[len - 3]) or null
 		controller: ncv[len - 2] or @_route.controller or null
 		view: ncv[len - 1] or 'default'
 		params: params
