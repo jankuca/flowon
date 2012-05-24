@@ -10,6 +10,7 @@ Controller::render = (status) ->
 		@_response.write JSON.stringifyFormatted @output
 
 	do @_response.end
+	do @clearMaxExecitionTimeout
 
 Controller::terminate = (status, message) ->
 	@output = null
