@@ -201,6 +201,7 @@ ContentServer::_routeToController = ->
 	try
 		Controller = require(path).Controller
 	catch err
+		console.error err.stack or err.message or err;
 		return @terminate 503, err
 		@terminate 404, "Missing controller file: #{if route.namespace then route.namespace + '/' else ''}#{route.controller}"
 	return @terminate 503, "Invalid controller file: #{if route.namespace then route.namespace + '/' else ''}#{route.controller}" if typeof Controller is not 'function'
@@ -235,6 +236,7 @@ ContentServer::_startupController = ->
 		else
 			do @controller.view
 	catch err
+		console.error err.stack or err.message or err;
 		@terminate 503, err
 
 ContentServer::_logRequest = () ->

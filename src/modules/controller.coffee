@@ -138,6 +138,7 @@ Controller::_terminateWithMessage = (message) ->
 			body = """
 				Application error: #{message}
 				Rendering error:   #{err}"""
+			console.error err.stack or err.message or err;
 		@_finishRendering body, Boolean err
 
 Controller::_finishRendering = (body, no_headers) ->
