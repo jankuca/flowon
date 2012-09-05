@@ -270,9 +270,7 @@ ContentServer::_readStaticFile = (unfiltered, error_callback) ->
 		return do error_callback if not exists unless typeof error_callback isnt 'function'
 		return @terminate 404 if not exists
 
-		FS.readFile path, 'binary', (err, data) =>
-			return @_handleStaticError err if err
-			@_returnStaticData data
+		@_renderExistingStaticFile path
 
 ContentServer::_coffeeToJS = (path, error_callback) ->
 	src_path = path.replace(/\.coffee\.js$/, '.coffee')
@@ -311,7 +309,7 @@ ContentServer::_handleStaticDir = ->
 		@_readStaticFile (err) =>
 			@terminate 403, 'Directory listing is not allowed.'
 
-ContentServer::_returnStaticData = (data) ->
+ContentServer::_renderExistingStaticFile = (path) ->
 	ext = Path.extname @pathname
 	switch ext
 		when '.html', '.css', '.manifest'
@@ -321,16 +319,25 @@ ContentServer::_returnStaticData = (data) ->
 				do @response.end
 				return
 
-			ejs = new EJS text: data
-			data = ejs.render
-				base_uri: app.get 'base_uri'
-				browser: @request.browser
-				request: @request
-				response: @response
+			FS.readFile path, 'binary', (err, data) =>
+				ejs = new EJS text: data
+				data = ejs.render
+					base_uri: app.get 'base_uri'
+					browser: @request.browser
+					request: @request
+					response: @response
+				@response.setHeaders @constructor.getHeadersByExtension ext
+				@response.write data, 'binary'
+				do @response.end
 
-	@response.setHeaders @constructor.getHeadersByExtension ext
-	@response.write data, 'binary'
-	do @response.end
+		else
+			try
+				stream = FS.createReadStream path
+			catch err
+				return @_handleStaticError err
+
+			@response.setHeaders @constructor.getHeadersByExtension ext
+			stream.pipe @response.response
 
 ContentServer::_redirectToCanonical = ->
 	pathname = @pathname
