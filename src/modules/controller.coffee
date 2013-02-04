@@ -9,7 +9,7 @@ module.exports.Controller = Controller = Function.inherit (request, response, ro
 
 	@method = request.method
 	@input = request.data
-	@domain = request.domain
+	@$domain = request.$domain
 	@subdomain = request.url.hostname.split('.').slice(-3, -2)[0]
 	@host = request.url.host
 	@xhr = Boolean request.headers['x-requested-with']?.match /xmlhttprequest/i
@@ -57,9 +57,9 @@ Controller::cookie = (key, value, expires, secure, httponly, level) ->
 
 	url = @_request.url
 	if level is 2 or not @subdomain
-		domain = ".#{@domain}"
+		domain = ".#{@$domain}"
 	else if level is 3
-		domain = ".#{@subdomain}.#{@domain}"
+		domain = ".#{@subdomain}.#{@$domain}"
 	else
 		domain = ".#{url.hostname}"
 
@@ -68,7 +68,7 @@ Controller::cookie = (key, value, expires, secure, httponly, level) ->
 Controller::getSession = -> @_session or null
 Controller::setSession = (session) ->
 	@cookie 'FLOWONSESSID', session.id, app.get('session_expiration'), no, yes, app.get('session_domain_level')
-	session.doc['_domain'] = @domain
+	session.doc['_domain'] = @$domain
 	session.save() # detached thread
 	@_session = session or null
 

@@ -59,8 +59,8 @@ var HttpResponse = module.exports.HttpResponse = Function.inherit(function (resp
 			if (obj.path) {
 				cookie.push('path=' + obj.path);
 			}
-			if (obj.domain) {
-				cookie.push('domain=' + obj.domain);
+			if (obj.$domain) {
+				cookie.push('domain=' + obj.$domain);
 			}
 			if (obj.secure) {
 				cookie.push('secure');

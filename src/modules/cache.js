@@ -162,7 +162,7 @@ Cache.remove = function (namespace, key, callback) {
 		memcached.connect();
 	} else {
 		var path = Path.join(APP_DIR, 'cache', namespace + '__' + key);
-		Path.exists(path, function (exists) {
+		FS.exists(path, function (exists) {
 			if (!exists) {
 				callback();
 				return;
@@ -170,5 +170,5 @@ Cache.remove = function (namespace, key, callback) {
 
 			FileSystem.unlink(path, callback);
 		});
-	}	
+	}
 };

@@ -266,7 +266,7 @@ ContentServer::_readStaticFile = (unfiltered, error_callback) ->
 	if not unfiltered
 		return @_coffeeToJS path, error_callback if path.split('.').slice(-2).join('.') is 'coffee.js'
 	# static
-	Path.exists path, (exists) =>
+	FS.exists path, (exists) =>
 		return do error_callback if not exists unless typeof error_callback isnt 'function'
 		return @terminate 404 if not exists
 
@@ -313,7 +313,7 @@ ContentServer::_renderExistingStaticFile = (path) ->
 	ext = Path.extname @pathname
 	switch ext
 		when '.html', '.css', '.manifest'
-			if ext is '.manifest' and @request.domain is @request.host
+			if ext is '.manifest' and @request.$domain is @request.host
 				@response.status = 404
 				@response.setHeaders @constructor.getHeadersByExtension ext
 				do @response.end
