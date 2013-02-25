@@ -476,7 +476,8 @@ Model.searchable = ->
 Model.search = (selector, q, callback) ->
 	throw new Error('This model is not searchable.') if @_search_chains is undefined
 
-	q = { '$in': q.toLowerCase().split(/\s+/) };
+	if typeof q == 'string'
+		q = { '$in': q.toLowerCase().split(/\s+/) }
 
 	results = []
 	i = 0
